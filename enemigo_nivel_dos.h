@@ -11,7 +11,7 @@ public:
 	
 	enemigo_nivel_dos(int x, int y) : Enemigo(x, y)
 	{	
-	this->velocidad_disparo = 14;
+	this->velocidad_disparo = 8;
 	sprite = {
             {L" ┷ ", L"┫█┣", L" ┯ "}, // derecha
             {L" ┷ ", L"┫█┣", L" ┯ "},   // izquierda	

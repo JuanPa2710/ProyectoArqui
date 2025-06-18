@@ -17,7 +17,7 @@ public:
                 {L" ━ ", L"⋮░⋮", L" ║"},  // abajo
             };
             this->velocidad_enemigo = 2;
-            this->velocidad_disparo = 10;
+            this->velocidad_disparo = 8;
        	
 	}
 	

@@ -18,10 +18,10 @@ public:
                 {L" ━ ", L"║█║", L" ▼"},  // abajo
             };
        
-       this->velocidad_disparo = 10;
+       this->velocidad_disparo = 4;
 	}
 	
-		void disparar(WINDOW* ventana) override 
+	void disparar(WINDOW* ventana) override 
 	{
 	 bool disparoEnemigo = false;
 

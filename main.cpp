@@ -24,10 +24,12 @@ using namespace std::chrono;
 
 // Matriz donde se representan los elementos del mapa 
 //(los especifico en un switch más adelante moppss)
+
+//6 = Vida - 7 = Escudo - 8 = Congelar
 int mapa[10][12] = {
   {0,1,0,1,0,1,0,1,0,1,0,0},
   {0,1,0,0,0,0,0,1,0,1,0,0},
-  {0,0,0,1,2,1,0,0,0,0,0,0},
+  {0,0,0,1,6,1,0,0,0,0,0,0},
   {1,1,0,0,0,0,0,1,1,0,1,0},
   {0,0,0,1,0,1,0,0,0,0,0,0},
   {0,1,0,1,1,1,0,1,0,1,0,0},
@@ -40,7 +42,7 @@ int mapa[10][12] = {
 int mapa2[10][12] = {
   {0,0,0,0,0,0,0,0,0,0,0,0},
   {0,1,0,1,0,1,0,1,0,1,1,0},
-  {0,1,0,1,0,1,2,1,0,1,0,0},
+  {0,1,0,1,0,1,7,1,0,1,0,0},
   {0,1,0,1,0,0,0,0,0,1,0,0},
   {0,0,0,0,0,1,0,1,0,0,0,0},
   {1,0,1,1,0,0,0,0,1,1,0,1},
@@ -55,7 +57,7 @@ int mapa3[10][12] = {
   {1,1,0,1,1,1,0,0,0,0,1,0},
   {0,0,0,0,1,0,0,1,0,0,1,0},
   {0,1,1,0,0,0,1,1,0,0,0,0},
-  {0,1,2,0,0,0,0,1,0,0,0,1},
+  {0,1,8,0,0,0,0,1,0,0,0,1},
   {0,0,0,0,1,1,0,1,0,0,0,1},
   {0,1,1,0,0,0,0,0,0,0,0,0},
   {0,1,0,0,0,0,1,0,0,1,1,0},
@@ -66,10 +68,10 @@ int mapa3[10][12] = {
 int mapa4[10][12] = {
   {0,0,0,0,0,0,0,0,0,0,0,0},
   {0,1,0,1,0,1,0,1,0,1,0,1},
-  {0,1,0,1,0,1,2,1,0,1,0,1},
+  {0,1,0,1,0,1,7,1,0,1,0,1},
   {0,1,0,1,0,1,0,1,0,1,0,1},
   {0,0,0,0,0,0,0,0,0,1,0,0},
-  {1,0,0,0,0,0,0,0,0,0,0,2},
+  {1,8,0,0,0,0,0,0,0,0,0,6},
   {0,1,0,1,0,0,0,0,1,1,0,0},
   {0,1,0,1,0,0,0,0,0,0,1,0},
   {0,1,0,1,0,1,1,1,0,1,1,0},
@@ -85,8 +87,8 @@ int mapa5[10][12] = {
   {0,0,0,0,0,2,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0,0},
   {0,1,1,0,0,0,0,0,0,1,1,2},
-  {0,0,1,0,0,0,0,0,0,1,0,0},
-  {0,0,1,0,0,0,0,0,0,0,0,0},
+  {0,0,1,0,0,0,0,0,0,7,0,0},
+  {0,0,6,0,0,0,0,0,0,0,0,0},
 };
 
 //Posición inicial del bichito
@@ -101,26 +103,34 @@ int vidas = 4;
 // puntaje
 int puntaje = 0;
 
+
 //Nivel actual
 int nivelActual = 1;    
 
-// Mejores puntajes
-std::vector<int> puntajes;
-std::vector<std::string> nombres;
-
 //Bandera escudo y tiempos
 bool escudo = false;
+
+//Bandera congelado
+bool congelar = false;
+
+//Banderas de disparo y ganar
 bool disparo = true;
 bool ganar =  false;
-bool enemigo_muerto = true;
+
+//Booleando que indica que se sigue en juego
+bool juego = true;
 
 std::chrono::steady_clock::time_point escudo_inicio;
+std::chrono::steady_clock::time_point congelar_inicio;
 constexpr double COOLDOWN = 0.5; 
 std::chrono::steady_clock::time_point lastShot =
     std::chrono::steady_clock::now()
   - std::chrono::duration_cast<std::chrono::steady_clock::duration>(
         std::chrono::duration<double>(COOLDOWN)
     );
+
+
+
 double tiempo_disparo;
 double tiempo_transcurrido;
 
@@ -143,17 +153,65 @@ void destruccion_estructura(int y, int x) {
         copia_mapa[y][x] = 0;
         system("aplay -q sounds/destruccion.wav &");
     }
-    if (y >= 0 && y < 10 && x >= 0 && x < 12 && copia_mapa[y][x] == 2 ) {
+    if (y >= 0 && y < 10 && x >= 0 && x < 12 && copia_mapa[y][x] == 6 ) {
         copia_mapa[y][x] = 0;
-        system("aplay -q sounds/destruccion.wav &");
-        if(nivelActual == 1)
-            vidas++;
-        if(nivelActual == 2)
-        {
-            escudo = true;
-            escudo_inicio = std::chrono::steady_clock::now();
-        }
+        system("aplay -q sounds/coin.wav &");
+        vidas++;
+        return;
     }
+    if(y >= 0 && y < 10 && x >= 0 && x < 12 && copia_mapa[y][x] == 7)
+    {   
+        copia_mapa[y][x] = 0;
+        system("aplay -q sounds/shield.wav &");
+        escudo = true;
+        escudo_inicio = std::chrono::steady_clock::now();
+        return;
+    }
+        if(y >= 0 && y < 10 && x >= 0 && x < 12 && copia_mapa[y][x] == 8)
+    {   
+        copia_mapa[y][x] = 0;
+        system("aplay -q sounds/freeze.wav &");
+       
+        congelar = true;
+        congelar_inicio = std::chrono::steady_clock::now();
+        return;
+    }
+    }
+
+void reiniciar_valores()
+{
+    jugador_y = 9, jugador_x = 8;
+
+    // Última dirreción a la que se movió
+    direccion = KEY_UP;
+
+    //vidas
+    vidas = 4;
+
+    // puntaje
+    puntaje = 0;
+
+
+    //Nivel actual
+    nivelActual = 1;    
+
+    //Bandera escudo y tiempos
+    escudo = false;
+
+    //Bandera congelado
+    congelar = false;
+
+    //Banderas de disparo y ganar
+    disparo = true;
+    ganar =  false;
+    juego=true;
+
+    totem_x = 4;
+    totem_y = 9;
+    indice_actual = 0;                // cuál enemigo estamos usando
+
+    enemigos.clear();
+    disparos.clear();
 }
 
 void efecto_destruccion(WINDOW* win, int y, int x) {
@@ -219,6 +277,9 @@ class Tank {
 
 Tank tank;
 
+
+
+
 // Aquí es donde metí la matriz para dibujar el mapa
 void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
     Enemigo* enemigo = enemigos[indice_actual].get();
@@ -278,6 +339,31 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
                     mvwaddwstr(win, wy+2, wx, L" █ " );
                     wattroff(win, COLOR_PAIR(3));
                     break;
+                case 6:
+                    wattron(win, COLOR_PAIR(7));
+                    for(int i=0; i<3; i++)
+		            {
+                        mvwaddwstr(win, wy+i, wx, L"###");
+                    }
+                    wattroff(win, COLOR_PAIR(7));
+                    break;
+                case 7:
+                    wattron(win, COLOR_PAIR(3));
+                    for(int i=0; i<3; i++)
+		            {
+                        mvwaddwstr(win, wy+i, wx, L"###");
+                    }
+                    wattroff(win, COLOR_PAIR(3));
+                    break;
+                case 8:
+                    wattron(win, COLOR_PAIR(8));
+                    for(int i=0; i<3; i++)
+		            {
+                        mvwaddwstr(win, wy+i, wx, L"###");
+                    }
+                    wattroff(win, COLOR_PAIR(8));
+                    break; 
+                    
                 default:
                     wattron(win, COLOR_PAIR(4));
                     for(int i=0; i<3; i++)
@@ -313,6 +399,7 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
                 wattron(win, COLOR_PAIR(3));
                 mvwaddwstr(win, wy, wx, L" *");
                 wattroff(win, COLOR_PAIR(3));
+
             }
         }
     
@@ -322,6 +409,7 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
 void printPantallaInicial(int centerHorizontal) {   
     int text1X = centerHorizontal - 65;
 
+    attron(COLOR_PAIR(3));
     const char* msg = "░▒▓███████▓▒░ ░▒▓██████▓▒░▒▓████████▓▒░▒▓████████▓▒░▒▓█▓▒░      ░▒▓████████▓▒░       ░▒▓██████▓▒░░▒▓█▓▒░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░";
     mvprintw(2, text1X, "%s", msg);
     const char* msg1 = "░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░      ░▒▓█▓▒░   ░▒▓█▓▒░      ░▒▓█▓▒░             ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░  ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░";
@@ -390,8 +478,9 @@ void printPantallaInicial(int centerHorizontal) {
 }
 
 void printPantallaGanar(int centerVertical, int centerHorizontal) {
-    int text1X = centerHorizontal - 16;
-    int text1Y = centerVertical - 12;
+    keypad(stdscr, FALSE);
+    int text1X = centerHorizontal - 30;
+    int text1Y = centerVertical - 20;
 
     // Definir colores para simular transparencia (grises)
     init_pair(1, COLOR_WHITE, -1);     
@@ -400,26 +489,25 @@ void printPantallaGanar(int centerVertical, int centerHorizontal) {
     attron(COLOR_PAIR(2));
     // Todas las líneas del ASCII art
     std::vector<const char*> figuras = {
-        "      ████████████████████      ",
-        "      ████████████████████      ",
-        "  █████                  █████  ",
-        "██ ████                  ████ ██",
-        "█ █   ██                ██   █ █",
-        "█ █    ██              ██    █ █",
-        "█ █     ██            ██     █ █",
-        " █ █     ██          ██     █ █ ",
-        " ██ ██  █  █        █  █  ██ ██ ",        
-        "   █  ████ █        █ ████  █   ",
-        "     █████ █        █ █████     ",
-
-        "            ██    ██            ",
-        "             ██████             ",
-        "             ██████             ",
-        "             ██  ██             ",
-        "           ██████████           ",
-        "        ████████████████        ",
-        "        ████████████████        ",
-        "        ████████████████        ",
+        "             ████████████████████                   ",
+        "            ████████████████████                    ",
+        "        █████                  █████                ",
+        "      ██ ████                  ████ ██              ",
+        "      █ █   ██                ██   █ █              ",
+        "      █ █    ██              ██    █ █              ",
+        "      █ █   ██              ██   █ █                ",
+        "       █ █   ██            ██   █ █                 ",
+        "       ██ ██  █            █  ██ ██                 ",
+        "         █  ████          ████  █                   ",
+        "           █████ █      █ █████                     ",
+        "                  ██  ██                            ",
+        "                   ████                             ",
+        "                   ████                             ",
+        "                   █  █                             ",
+        "                 ████████                           ",
+        "              ██████████████                        ",
+        "              ██████████████                        ",
+        "              ██████████████                        ",
     };
 
     const char* texto[] = {
@@ -441,7 +529,7 @@ void printPantallaGanar(int centerVertical, int centerHorizontal) {
     int posX = centerHorizontal - 30; 
     int posY = centerVertical + 10; 
 
-    for (int i = 0; i < lineas; i++) {
+        for (int i = 0; i < lineas; i++) {
         mvprintw(posY++, posX, "%s", texto[i]);
         usleep(150000);
         refresh();
@@ -450,6 +538,7 @@ void printPantallaGanar(int centerVertical, int centerHorizontal) {
 }
 
 void printPantallaFinal(int centerVertical, int centerHorizontal) {
+    keypad(stdscr, FALSE);
     int text1X = centerHorizontal - 30;
     int text1Y = centerVertical - 20;
 
@@ -511,125 +600,25 @@ void printPantallaFinal(int centerVertical, int centerHorizontal) {
     // Simular aumento de opacidad en varios pasos
     for (int i = 0; i < lineas; i++) {
         mvprintw(posY++, posX, "%s", texto[i]);
-        usleep(150000);
-        refresh();
-    }
-}
-
-void printPantallaPuntajes(int centerVertical, int centerHorizontal, bool nuevoPuntaje) {
-    int text1X = centerHorizontal - 46;
-    int text1Y = centerVertical - 26;
-
-    // Definir colores para simular transparencia (grises)
-    init_pair(1, COLOR_WHITE, -1); 
-
-    attron(COLOR_PAIR(1));
-
-    const char* texto[] = {
-        "    ██████   ██████ ██████████       █████    ███████    ███████████   ██████████  █████████          ",
-        "   ░░██████ ██████ ░░███░░░░░█      ░░███   ███░░░░░███ ░░███░░░░░███ ░░███░░░░░█ ███░░░░░███         ",
-        "    ░███░█████░███  ░███  █ ░        ░███  ███     ░░███ ░███    ░███  ░███  █ ░ ░███    ░░░          ",
-        "    ░███░░███ ░███  ░██████          ░███ ░███      ░███ ░██████████   ░██████   ░░█████████          ",
-        "    ░███ ░░░  ░███  ░███░░█          ░███ ░███      ░███ ░███░░░░░███  ░███░░█    ░░░░░░░░███         ",
-        "    ░███      ░███  ░███ ░   █ ███   ░███ ░░███     ███  ░███    ░███  ░███ ░   █ ███    ░███         ",
-        "    █████     █████ ██████████░░████████   ░░░███████░   █████   █████ ██████████░░█████████          ",
-        "   ░░░░░     ░░░░░ ░░░░░░░░░░  ░░░░░░░░      ░░░░░░░    ░░░░░   ░░░░░ ░░░░░░░░░░  ░░░░░░░░░           ",
-        " ███████████  █████  █████ ██████   █████ ███████████   █████████         █████ ██████████  █████████ ",
-        "░░███░░░░░███░░███  ░░███ ░░██████ ░░███ ░█░░░███░░░█  ███░░░░░███       ░░███ ░░███░░░░░█ ███░░░░░███",
-        " ░███    ░███ ░███   ░███  ░███░███ ░███ ░   ░███  ░  ░███    ░███        ░███  ░███  █ ░ ░███    ░░░ ",
-        " ░██████████  ░███   ░███  ░███░░███░███     ░███     ░███████████        ░███  ░██████   ░░█████████ ",
-        " ░███░░░░░░   ░███   ░███  ░███ ░░██████     ░███     ░███░░░░░███        ░███  ░███░░█    ░░░░░░░░███",
-        " ░███         ░███   ░███  ░███  ░░█████     ░███     ░███    ░███  ███   ░███  ░███ ░   █ ███    ░███",
-        " █████        ░░████████   █████  ░░█████    █████    █████   █████░░████████   ██████████░░█████████ ",
-        "░░░░░          ░░░░░░░░   ░░░░░    ░░░░░    ░░░░░    ░░░░░   ░░░░░  ░░░░░░░░   ░░░░░░░░░░  ░░░░░░░░░  "
-    };
-
-    for (int i = 0; i < 16; i++) {            
-        mvprintw(text1Y++, text1X, "%s", texto[i]);
+        
     }
     refresh();
-
-    WINDOW* rankingWIN = newwin(puntajes.size()+4, 35, text1Y+2, text1X+31);
-    werase(rankingWIN);
-    box(rankingWIN, 0, 0);  
-
-    text1Y += 3;
-    if (puntajes.size() > 0) {
-        mvprintw(text1Y, text1X+33, "%s", "     NOMBRE\tPUNTAJE");
-        text1Y += 2;
-        for (int i = 0; i < puntajes.size(); i++) {
-            std::string texto = "  " + std::to_string(i+1) + ". " + nombres[i] + "\t" + std::to_string(puntajes[i]);
-            mvprintw(text1Y++, text1X+33, "%s", texto.c_str());
-        }
-    } else {
-        for (int i = 0; i <= 5; i++) {
-            mvprintw(text1Y++, text1X, "%s", ". HOLAAAS");
-        }
-    }
-    wrefresh(rankingWIN);      //Dibuja el mapa apartir de la matriz
-}
-
-void obtenerCaracteres(char *text,int y, int x) {
-    echo();  // Mostrar lo que el usuario escribe
-    curs_set(1);  // Hacer visible el cursor
-    int ch;
-    int len = 0;
-
-    mvprintw(y-1, x, "%s", "Ingrese su nombre (Solo tres caracteres)");
-    while (len < 3) {
-        ch = mvwgetch(stdscr, y, x + len);  // Lee carácter por carácter
-        
-        if (ch == ERR || ch == '\n') continue;  // Ignora errores o Enter
-        if (ch == 127 || ch == KEY_BACKSPACE) {  // Backspace
-            if (len > 0) {
-                len--;
-                mvwaddch(stdscr, y, x + len, ' ');  // Borra el carácter
-            }
-            continue;
-        }
-
-        text[len] = ch;
-        len++;
-    }
-    text[len] = '\0';  // Termina la cadena
-    curs_set(0);  // Oculta el cursor
-}
-
-void procesoPuntajes(int centerVertical, int centerHorizontal) {
-    bool nuevoPuntaje = false;
-    if (puntajes.size() > 0) {        
-        int i = 0;
-        while(!nuevoPuntaje) {
-            if (puntajes[i] == puntaje) {
-                puntajes[i++] = puntaje;
-                nuevoPuntaje = true;
-            }
-        }
-    } else {
-        if (puntaje > 0) {
-            puntajes.push_back(puntaje);            
-            nuevoPuntaje = true;
-        }
-    }
-
-    char name[3];
-    obtenerCaracteres(name, 20, 20);
-    std::string nameString(name);
-    nombres.push_back(nameString);    
-    clear();
-    
-    printPantallaPuntajes(centerVertical, centerHorizontal, nuevoPuntaje);
 }
 
 int main() {
-srand(time(NULL));
+     WINDOW* gamewin;
+
+    while(juego)
+    {
+    srand(time(NULL));
     setlocale(LC_ALL, "");
     initscr();
+    keypad(stdscr, TRUE);
+
 
     enemigos.emplace_back(std::make_unique<enemigo_normal>(0, 0));
     enemigos.emplace_back(std::make_unique<enemigo_normal>(10, 0));
     enemigos.emplace_back(std::make_unique<enemigo_normal>(0, 0));
-	
 	enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
 	enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
 	enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
@@ -658,6 +647,8 @@ srand(time(NULL));
     init_pair(4, COLOR_BLACK, -1);
     init_pair(5, COLOR_RED, -1);
     init_pair(6, COLOR_MAGENTA, -1); // Enemigo
+    init_pair(7, COLOR_GREEN, -1);   //vida
+    init_pair(8, COLOR_CYAN,   -1);  // par 8 = celeste
 
     int map_height = 10;
     int map_width = 12;
@@ -668,7 +659,7 @@ srand(time(NULL));
     int start_y = (LINES - win_height) / 2;
     int start_x = (COLS - win_width) / 2;
 
-    WINDOW* gamewin = newwin(win_height, win_width, start_y, start_x);
+    gamewin = newwin(win_height, win_width, start_y, start_x);
     int info_width = 20;
     WINDOW* info_win = newwin(win_height, info_width, start_y, start_x + win_width+1);
 
@@ -676,10 +667,7 @@ srand(time(NULL));
     int centerHorizontal = (COLS / 2);
 
     printPantallaInicial(centerHorizontal);
-    //printPantallaPuntajes(centerVertical, centerHorizontal, false);
-    // procesoPuntajes(centerVertical, centerHorizontal);
 
-    attron(COLOR_PAIR(1));
     refresh();
 
     timeout(-1);
@@ -698,6 +686,8 @@ srand(time(NULL));
         }
     }   
 
+    
+
 	while (ejecutando) {
 		    static int last_lines = LINES, last_cols = COLS;
 		    if (LINES != last_lines || COLS != last_cols) {
@@ -713,9 +703,7 @@ srand(time(NULL));
 		        redrawwin(stdscr);
 		    }
 			
-            // Carga nivel 2
             if (nivelActual == 1 && cantEnemigos == 0) {
-                puntaje = puntaje*vidas;
                 cantEnemigos = 3;
                 jugador_x=9;
                 jugador_y=8;
@@ -732,9 +720,7 @@ srand(time(NULL));
                 } 
             }
             
-            // Carga nivel 3
-            if (nivelActual == 2 && cantEnemigos == 0) {
-                puntaje = puntaje*vidas;
+               if (nivelActual == 2 && cantEnemigos == 0) {
                 cantEnemigos = 3;
                 nivelActual++;
                 jugador_x=0;
@@ -751,9 +737,8 @@ srand(time(NULL));
                 } 
             }
 
-            // Carga nivel 4
+            //Nivel 4
             if (nivelActual == 3 && cantEnemigos == 0) {
-                puntaje = puntaje*vidas;
                 cantEnemigos = 4;
                 nivelActual++;
                 totem_x = 6;
@@ -770,9 +755,8 @@ srand(time(NULL));
                 } 
             }
             
-            // Carga nivel 5
+            //Nivel 5
             if (nivelActual == 4 && cantEnemigos == 0) {
-                puntaje = puntaje*vidas;
                 cantEnemigos = 2;
                 nivelActual++;
                 jugador_x=11;
@@ -784,13 +768,25 @@ srand(time(NULL));
                     }
                 } 
             }
+
+
 		    
 		    werase(gamewin);        
 		    box(gamewin, 0, 0);         //Dibuja los bordes de la pantalla
             int prev_enemy_y;
             int prev_enemy_x; 
-        
-		    enemigo->mover(); //Se mueve el enemigo
+            
+            if(!congelar)
+            {
+                enemigo->mover(); //Se mueve el enemigo
+            }
+		    else{
+                auto ahora = std::chrono::steady_clock::now();
+                auto duracion = std::chrono::duration_cast<std::chrono::seconds>(ahora - congelar_inicio);
+                if (duracion.count() >= 2) {
+                    congelar = false;
+                }                
+            }
             
             if(escudo)
             {  
@@ -812,6 +808,7 @@ srand(time(NULL));
             mvwprintw(info_win, 6, 2, "Vidas: ");
             for(int i= 0; i<vidas; i++){
                 waddwstr(info_win, L" ♥");
+
             }
 
 
@@ -819,13 +816,19 @@ srand(time(NULL));
 		    wrefresh(gamewin);          //refresh para el renderizado
 
 		    ch = getch();
-		    if (ch == 'q') break;       //Opción para salir del juego
+		    if (ch == 'q') 
+            {
+                juego=false;
+                break;
+            }       //Opción para salir del juego
 
 		    int new_y = jugador_y;
 		    int new_x = jugador_x;
 
-		    enemigo->disparar(gamewin);
-
+            if(!congelar)
+            {
+		        enemigo->disparar(gamewin);
+            }
 		    //Para determinar los movimientos del jugador 
 		    switch (ch) {
 		        case KEY_UP:    new_y--; direccion = KEY_UP; tank.set_direccion(0); break;
@@ -851,7 +854,9 @@ srand(time(NULL));
 
 		    //Condicionales para que el jugador no pueda atravesar los bloques
 		    if (new_y >= 0 && new_y < 10 && new_x >= 0 && new_x < 12) {
-		        if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3 && (new_x != enemigo->getPosX()|| new_y != enemigo->getPosY())) {
+		        if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3 && 
+                    copia_mapa[new_y][new_x] != 6 && copia_mapa[new_y][new_x] != 7 && copia_mapa[new_y][new_x] != 8 
+                    && (new_x != enemigo->getPosX()|| new_y != enemigo->getPosY())) {
 		            jugador_y = new_y;
 		            jugador_x = new_x;
 		        }
@@ -869,11 +874,14 @@ srand(time(NULL));
 
 		        if (it->x < 0 || it->x >= 12 || it->y < 0 || it->y >= 10) {
 		            it = disparos.erase(it);
-		        } else if (copia_mapa[it->y][it->x] == 1 ||copia_mapa[it->y][it->x] == 2 ) {
+		        } else if (copia_mapa[it->y][it->x] == 1 ||copia_mapa[it->y][it->x] == 6 
+                ||copia_mapa[it->y][it->x] == 7 ||copia_mapa[it->y][it->x] == 8) {
 		            destruccion_estructura(it->y, it->x);
 		            //efecto_destruccion(gamewin, it->y, it->x);
                     if(nivelActual!=5 ||(nivelActual==5 && it->fromPlayer))
-		                it = disparos.erase(it);
+		                {
+                            it = disparos.erase(it); 
+                        }
 
                     
 		        }
@@ -884,7 +892,8 @@ srand(time(NULL));
                     {   
 
                         if(nivelActual == 5 && enemigo->get_impactos_destruccion()>0)
-                        {
+                        {   
+                            system("aplay -q sounds/disparoBlindado.wav &");
                             enemigo->nuevo_impacto();
                             it = disparos.erase(it);
                             continue;
@@ -894,23 +903,7 @@ srand(time(NULL));
                         system("aplay -q sounds/muerte.wav &");
                         efecto_destruccion(gamewin, it->y, it->x);
                         enemigo->morir();
-
-                        if(nivelActual ==1){
-                            puntaje += 10;
-                        }
-                        if(nivelActual ==2){
-                            puntaje += 20;
-                        }
-                        if(nivelActual ==3){
-                            puntaje += 30;
-                        }
-                        if(nivelActual ==4){
-                            puntaje += 40;
-                        }
-                        if(nivelActual ==5){
-                            puntaje += 50;
-                        }
-
+                        puntaje += 10;
                         indice_actual++;
                         if (indice_actual < enemigos.size()) {
                             enemigo = enemigos[indice_actual].get();
@@ -981,22 +974,15 @@ srand(time(NULL));
     if (ganar) {
         printPantallaGanar(centerVertical,centerHorizontal);
     } else {
-        printPantallaFinal(centerVertical, centerHorizontal);        
+        printPantallaFinal(centerVertical, centerHorizontal);
+ 
     }
-
-    while (true) {
-        ch = getch();
-
-        if (ch == 'q') {
-            break;
-        }
-    }
-
     clear();
+    reiniciar_valores();
     refresh();
-    // printPantallaPuntajes(centerVertical, centerHorizontal, true);
-    procesoPuntajes(centerVertical, centerHorizontal);
 
+}
+    clear();
     timeout(-1);
     getch();
     timeout(1000);

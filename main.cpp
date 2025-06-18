@@ -132,11 +132,8 @@ std::chrono::steady_clock::time_point lastShot =
         std::chrono::duration<double>(COOLDOWN)
     );
 
-
-
 double tiempo_disparo;
 double tiempo_transcurrido;
-
 
 int copia_mapa[10][12];
 
@@ -279,9 +276,6 @@ class Tank {
 // Crear enemigos
 
 Tank tank;
-
-
-
 
 // Aquí es donde metí la matriz para dibujar el mapa
 void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
@@ -694,31 +688,23 @@ void procesoPuntajes(int centerVertical, int centerHorizontal) {
         int i = 0;
         while(!nuevoPuntaje) {
             if (puntajes[i] == puntaje) {
-                puntajes[i++] = puntaje;
-                nuevoPuntaje = true;
+                puntajes.insert(puntajes.begin(), i, puntaje);
             }
         }
     } else {
-        if (puntaje > 0) {
-            puntajes.push_back(puntaje);            
-            nuevoPuntaje = true;
-        }
-    }
+        puntajes.push_back(puntaje);            
+        nuevoPuntaje = true;
+    }    
 
     char name[3];
     obtenerCaracteres(name, 20, 20);
     std::string nameString(name);
     nombres.push_back(nameString);    
     clear();
-    
     printPantallaPuntajes(centerVertical, centerHorizontal, nuevoPuntaje);
 }
 
-int main() {
-     WINDOW* gamewin;
-
-    while(juego)
-    {
+void renderizadoJuego(WINDOW* gamewin) {   
     srand(time(NULL));
     setlocale(LC_ALL, "");
     initscr();
@@ -728,11 +714,11 @@ int main() {
     enemigos.emplace_back(std::make_unique<enemigo_normal>(0, 0));
     enemigos.emplace_back(std::make_unique<enemigo_normal>(10, 0));
     enemigos.emplace_back(std::make_unique<enemigo_normal>(0, 0));
-	enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
-	enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
-	enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
+    enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
+    enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
+    enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
     enemigos.emplace_back(std::make_unique<enemigo_nivel_tres>(0, 9));
-	enemigos.emplace_back(std::make_unique<enemigo_nivel_tres>(9, 9));
+    enemigos.emplace_back(std::make_unique<enemigo_nivel_tres>(9, 9));
     enemigos.emplace_back(std::make_unique<enemigo_nivel_tres>(0, 9));
     enemigos.emplace_back(std::make_unique<enemigo_normal>(0, 0));
     enemigos.emplace_back(std::make_unique<enemigo_normal>(9, 0));
@@ -795,9 +781,7 @@ int main() {
         }
     }   
 
-    
-
-	while (ejecutando) {
+    while (ejecutando) {
         static int last_lines = LINES, last_cols = COLS;
         if (LINES != last_lines || COLS != last_cols) {
             last_lines = LINES;
@@ -1096,9 +1080,9 @@ int main() {
                     ++it;
                 }
             }
-	}
+    }
 
-	werase(gamewin);
+    werase(gamewin);
     wrefresh(gamewin);
 
     clear();
@@ -1111,7 +1095,7 @@ int main() {
     }
 
     while (true) {
-        ch = getch();
+        auto ch = getch();
 
         if (ch == 'q') {
             break;
@@ -1119,17 +1103,28 @@ int main() {
     }
 
     clear();
-    reiniciar_valores();
-    refresh();
     procesoPuntajes(centerVertical, centerHorizontal);
 
+    while (true) {
+        auto ch = getch();
 
+        if (ch == 'c') {
+            break;
+        }
+    }
+    reiniciar_valores();   
     clear();
-    timeout(-1);
-    getch();
-    timeout(1000);
+    wrefresh(gamewin);
+}
+
+int main() {
+    WINDOW* gamewin;
+
+    while (juego) {
+        renderizadoJuego(gamewin);
+    }
+
     delwin(gamewin);
     endwin();
     return 0;
-}
 }

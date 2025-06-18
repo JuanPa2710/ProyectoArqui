@@ -346,23 +346,23 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
                     break;
                 case 6:
                     wattron(win, COLOR_PAIR(7));        
-		    mvwaddwstr(win, wy+i, wx, L"###");
-                    mvwaddwstr(win, wy+i, wx, L"#❤#");
-		    mvwaddwstr(win, wy+i, wx, L"###");
+		    mvwaddwstr(win, wy, wx, L"###");
+                    mvwaddwstr(win, wy+1, wx, L"#❤#");
+		    mvwaddwstr(win, wy+2, wx, L"###");
                     wattroff(win, COLOR_PAIR(7));
                     break;
                 case 7:
                     wattron(win, COLOR_PAIR(3));
-	            mvwaddwstr(win, wy+i, wx, L"###");
-                    mvwaddwstr(win, wy+i, wx, L"#🛡#");
-                    mvwaddwstr(win, wy+i, wx, L"###");
+	            mvwaddwstr(win, wy, wx, L"###");
+                    mvwaddwstr(win, wy+1, wx, L"#🛡#");
+                    mvwaddwstr(win, wy+2, wx, L"###");
                     wattroff(win, COLOR_PAIR(3));
                     break;
                 case 8:
                     wattron(win, COLOR_PAIR(8));
-		    mvwaddwstr(win, wy+i, wx, L"###");
-                    mvwaddwstr(win, wy+i, wx, L"#❄#");
-		    mvwaddwstr(win, wy+i, wx, L"###");
+		    mvwaddwstr(win, wy, wx, L"###");
+                    mvwaddwstr(win, wy+1, wx, L"#❄#");
+		    mvwaddwstr(win, wy+2, wx, L"###");
                     wattroff(win, COLOR_PAIR(8));
                     break; 
                     
@@ -1079,7 +1079,7 @@ void renderizadoJuego(WINDOW* gamewin) {
 
 		           }
 		           else 
-		           {	if(nivel==3)
+		           {	if(nivelActual==3)
 			   	{
 					jugador_y = 0;
 					jugador_x = 0;

@@ -144,7 +144,9 @@ public:
 		    puede_moverse = false;
 		}
 		else if (copia_mapa[nueva_posicion_y][nueva_posicion_x] == 1 || 
-		    copia_mapa[nueva_posicion_y][nueva_posicion_x] == 2 || copia_mapa[nueva_posicion_y][nueva_posicion_x] == 3 || (nueva_posicion_y == jugador_y && nueva_posicion_x==jugador_x)) {
+		    copia_mapa[nueva_posicion_y][nueva_posicion_x] == 2 || copia_mapa[nueva_posicion_y][nueva_posicion_x] == 3 
+		    || copia_mapa[nueva_posicion_y][nueva_posicion_x] == 6 || copia_mapa[nueva_posicion_y][nueva_posicion_x] == 7
+		    || copia_mapa[nueva_posicion_y][nueva_posicion_x] == 8  || (nueva_posicion_y == jugador_y && nueva_posicion_x==jugador_x)) {
 		    puede_moverse = false;
 		}
 		

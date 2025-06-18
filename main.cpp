@@ -345,27 +345,24 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
                     wattroff(win, COLOR_PAIR(3));
                     break;
                 case 6:
-                    wattron(win, COLOR_PAIR(7));
-                    for(int i=0; i<3; i++)
-		            {
-                        mvwaddwstr(win, wy+i, wx, L"###");
-                    }
+                    wattron(win, COLOR_PAIR(7));        
+		    mvwaddwstr(win, wy+i, wx, L"###");
+                    mvwaddwstr(win, wy+i, wx, L"#❤#");
+		    mvwaddwstr(win, wy+i, wx, L"###");
                     wattroff(win, COLOR_PAIR(7));
                     break;
                 case 7:
                     wattron(win, COLOR_PAIR(3));
-                    for(int i=0; i<3; i++)
-		            {
-                        mvwaddwstr(win, wy+i, wx, L"###");
-                    }
+	            mvwaddwstr(win, wy+i, wx, L"###");
+                    mvwaddwstr(win, wy+i, wx, L"#🛡#");
+                    mvwaddwstr(win, wy+i, wx, L"###");
                     wattroff(win, COLOR_PAIR(3));
                     break;
                 case 8:
                     wattron(win, COLOR_PAIR(8));
-                    for(int i=0; i<3; i++)
-		            {
-                        mvwaddwstr(win, wy+i, wx, L"###");
-                    }
+		    mvwaddwstr(win, wy+i, wx, L"###");
+                    mvwaddwstr(win, wy+i, wx, L"#❄#");
+		    mvwaddwstr(win, wy+i, wx, L"###");
                     wattroff(win, COLOR_PAIR(8));
                     break; 
                     
@@ -862,8 +859,8 @@ void renderizadoJuego(WINDOW* gamewin) {
                 nivelActual++;
                 totem_x = 6;
                 totem_y = 9;
-                jugador_x=11;
-                jugador_y=8;
+                jugador_x=0;
+                jugador_y=0;
                 for (auto it = disparos.begin(); it != disparos.end();) {
                     it = disparos.erase(it);
                 }
@@ -1082,10 +1079,15 @@ void renderizadoJuego(WINDOW* gamewin) {
 
 		           }
 		           else 
-		           {
+		           {	if(nivel==3)
+			   	{
+					jugador_y = 0;
+					jugador_x = 0;
+					continue;
+				}
 		           	jugador_y = 9;
 		           	jugador_x = 8;
-                    continue;
+                    		continue;
 		           }
 		            
 		        }

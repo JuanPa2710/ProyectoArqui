@@ -347,21 +347,21 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
                 case 6:
                     wattron(win, COLOR_PAIR(7));        
 		    mvwaddwstr(win, wy, wx, L"###");
-                    mvwaddwstr(win, wy+1, wx, L"#❤#");
+                    mvwaddwstr(win, wy+1, wx, L"###");
 		    mvwaddwstr(win, wy+2, wx, L"###");
                     wattroff(win, COLOR_PAIR(7));
                     break;
                 case 7:
                     wattron(win, COLOR_PAIR(3));
 	            mvwaddwstr(win, wy, wx, L"###");
-                    mvwaddwstr(win, wy+1, wx, L"#🛡#");
+                    mvwaddwstr(win, wy+1, wx, L"###");
                     mvwaddwstr(win, wy+2, wx, L"###");
                     wattroff(win, COLOR_PAIR(3));
                     break;
                 case 8:
                     wattron(win, COLOR_PAIR(8));
 		    mvwaddwstr(win, wy, wx, L"###");
-                    mvwaddwstr(win, wy+1, wx, L"#❄#");
+                    mvwaddwstr(win, wy+1, wx, L"###");
 		    mvwaddwstr(win, wy+2, wx, L"###");
                     wattroff(win, COLOR_PAIR(8));
                     break; 

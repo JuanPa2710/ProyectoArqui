@@ -392,19 +392,21 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
         }
         
         else{
-            int dir = enemigo->getDireccion() - 1;
-            if(dir==3 || dir == 2)
-            {
-                wattron(win, COLOR_PAIR(3));
-                mvwaddwstr(win, wy, wx, L" █");
-                wattroff(win, COLOR_PAIR(3));
-            }
-            else 
-            {
-                wattron(win, COLOR_PAIR(3));
-                mvwaddwstr(win, wy, wx, L" *");
-                wattroff(win, COLOR_PAIR(3));
+            for (auto& enemigo : enemigosActuales) {
+                int dir = enemigo->getDireccion() - 1;
+                if(dir==3 || dir == 2)
+                {
+                    wattron(win, COLOR_PAIR(3));
+                    mvwaddwstr(win, wy, wx, L" █");
+                    wattroff(win, COLOR_PAIR(3));
+                }
+                else 
+                {
+                    wattron(win, COLOR_PAIR(3));
+                    mvwaddwstr(win, wy, wx, L" *");
+                    wattroff(win, COLOR_PAIR(3));
 
+                }
             }
         }
     
@@ -736,8 +738,10 @@ void renderizadoJuego(WINDOW* gamewin) {
     enemigos.emplace_back(std::make_unique<enemigo_nivel_tres>(0, 9));
     
     enemigos.emplace_back(std::make_unique<enemigo_normal>(9, 0));
+    enemigos.emplace_back(std::make_unique<enemigo_normal>(9, 0));
     enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
     enemigos.emplace_back(std::make_unique<enemigo_nivel_tres>(9, 0));
+
     enemigos.emplace_back(std::make_unique<enemigo_ultimo>(0, 0));
 
     enemigosActuales.emplace_back(enemigos[indice_actual].get());
@@ -874,7 +878,7 @@ void renderizadoJuego(WINDOW* gamewin) {
             
             //Nivel 5
             if (nivelActual == 4 && cantEnemigos == 0) {
-                cantEnemigos = 2;
+                cantEnemigos = 1;
                 nivelActual++;
                 jugador_x=11;
                 jugador_y=8;
@@ -884,6 +888,7 @@ void renderizadoJuego(WINDOW* gamewin) {
                         copia_mapa[i][j] = mapa5[i][j];
                     }
                 } 
+                enemigosActuales.emplace_back(enemigos[++indice_actual].get());
             }
 
 
@@ -975,7 +980,8 @@ void renderizadoJuego(WINDOW* gamewin) {
 
 		    //Condicionales para que el jugador no pueda atravesar los bloques
 		    if (new_y >= 0 && new_y < 10 && new_x >= 0 && new_x < 12) {
-                if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3) {
+                if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3
+                && copia_mapa[new_y][new_x] != 6 && copia_mapa[new_y][new_x] != 7 && copia_mapa[new_y][new_x] != 8) {
                     for (auto& enemigo : enemigosActuales) {
                         if(new_x == enemigo->getPosX() && new_y == enemigo->getPosY()){
                             new_y = jugador_y;
@@ -1023,10 +1029,11 @@ void renderizadoJuego(WINDOW* gamewin) {
                             efecto_destruccion(gamewin, it->y, it->x);
                             enemigo->morir();
                             puntaje += 10;                            
-                            if (indice_actual < enemigos.size()) {
+                            if (indice_actual < enemigos.size()-1) {
 
                             } else {
                                 ejecutando = false;
+                                ganar = true;
                                 break;
                             }
                             cantEnemigos--;

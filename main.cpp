@@ -103,9 +103,12 @@ int vidas = 4;
 // puntaje
 int puntaje = 0;
 
-
 //Nivel actual
-int nivelActual = 1;    
+int nivelActual = 1;   
+
+// Mejores puntajesAdd commentMore actions
+std::vector<int> puntajes;
+std::vector<std::string> nombres;
 
 //Bandera escudo y tiempos
 bool escudo = false;
@@ -478,9 +481,8 @@ void printPantallaInicial(int centerHorizontal) {
 }
 
 void printPantallaGanar(int centerVertical, int centerHorizontal) {
-    keypad(stdscr, FALSE);
-    int text1X = centerHorizontal - 30;
-    int text1Y = centerVertical - 20;
+    int text1X = centerHorizontal - 16;
+    int text1Y = centerVertical - 12;
 
     // Definir colores para simular transparencia (grises)
     init_pair(1, COLOR_WHITE, -1);     
@@ -489,25 +491,26 @@ void printPantallaGanar(int centerVertical, int centerHorizontal) {
     attron(COLOR_PAIR(2));
     // Todas las líneas del ASCII art
     std::vector<const char*> figuras = {
-        "             ████████████████████                   ",
-        "            ████████████████████                    ",
-        "        █████                  █████                ",
-        "      ██ ████                  ████ ██              ",
-        "      █ █   ██                ██   █ █              ",
-        "      █ █    ██              ██    █ █              ",
-        "      █ █   ██              ██   █ █                ",
-        "       █ █   ██            ██   █ █                 ",
-        "       ██ ██  █            █  ██ ██                 ",
-        "         █  ████          ████  █                   ",
-        "           █████ █      █ █████                     ",
-        "                  ██  ██                            ",
-        "                   ████                             ",
-        "                   ████                             ",
-        "                   █  █                             ",
-        "                 ████████                           ",
-        "              ██████████████                        ",
-        "              ██████████████                        ",
-        "              ██████████████                        ",
+        "      ████████████████████      ",
+        "      ████████████████████      ",
+        "  █████                  █████  ",
+        "██ ████                  ████ ██",
+        "█ █   ██                ██   █ █",
+        "█ █    ██              ██    █ █",
+        "█ █     ██            ██     █ █",
+        " █ █     ██          ██     █ █ ",
+        " ██ ██  █  █        █  █  ██ ██ ",        
+        "   █  ████ █        █ ████  █   ",
+        "     █████ █        █ █████     ",
+
+        "            ██    ██            ",
+        "             ██████             ",
+        "             ██████             ",
+        "             ██  ██             ",
+        "           ██████████           ",
+        "        ████████████████        ",
+        "        ████████████████        ",
+        "        ████████████████        ",
     };
 
     const char* texto[] = {
@@ -529,7 +532,7 @@ void printPantallaGanar(int centerVertical, int centerHorizontal) {
     int posX = centerHorizontal - 30; 
     int posY = centerVertical + 10; 
 
-        for (int i = 0; i < lineas; i++) {
+    for (int i = 0; i < lineas; i++) {
         mvprintw(posY++, posX, "%s", texto[i]);
         usleep(150000);
         refresh();
@@ -600,9 +603,115 @@ void printPantallaFinal(int centerVertical, int centerHorizontal) {
     // Simular aumento de opacidad en varios pasos
     for (int i = 0; i < lineas; i++) {
         mvprintw(posY++, posX, "%s", texto[i]);
-        
+        usleep(150000);
+        refresh();
     }
     refresh();
+}
+
+void printPantallaPuntajes(int centerVertical, int centerHorizontal, bool nuevoPuntaje) {
+    int text1X = centerHorizontal - 46;
+    int text1Y = centerVertical - 26;
+
+    // Definir colores para simular transparencia (grises)
+    init_pair(1, COLOR_WHITE, -1); 
+
+    attron(COLOR_PAIR(1));
+
+    const char* texto[] = {
+        "    ██████   ██████ ██████████       █████    ███████    ███████████   ██████████  █████████          ",
+        "   ░░██████ ██████ ░░███░░░░░█      ░░███   ███░░░░░███ ░░███░░░░░███ ░░███░░░░░█ ███░░░░░███         ",
+        "    ░███░█████░███  ░███  █ ░        ░███  ███     ░░███ ░███    ░███  ░███  █ ░ ░███    ░░░          ",
+        "    ░███░░███ ░███  ░██████          ░███ ░███      ░███ ░██████████   ░██████   ░░█████████          ",
+        "    ░███ ░░░  ░███  ░███░░█          ░███ ░███      ░███ ░███░░░░░███  ░███░░█    ░░░░░░░░███         ",
+        "    ░███      ░███  ░███ ░   █ ███   ░███ ░░███     ███  ░███    ░███  ░███ ░   █ ███    ░███         ",
+        "    █████     █████ ██████████░░████████   ░░░███████░   █████   █████ ██████████░░█████████          ",
+        "   ░░░░░     ░░░░░ ░░░░░░░░░░  ░░░░░░░░      ░░░░░░░    ░░░░░   ░░░░░ ░░░░░░░░░░  ░░░░░░░░░           ",
+        " ███████████  █████  █████ ██████   █████ ███████████   █████████         █████ ██████████  █████████ ",
+        "░░███░░░░░███░░███  ░░███ ░░██████ ░░███ ░█░░░███░░░█  ███░░░░░███       ░░███ ░░███░░░░░█ ███░░░░░███",
+        " ░███    ░███ ░███   ░███  ░███░███ ░███ ░   ░███  ░  ░███    ░███        ░███  ░███  █ ░ ░███    ░░░ ",
+        " ░██████████  ░███   ░███  ░███░░███░███     ░███     ░███████████        ░███  ░██████   ░░█████████ ",
+        " ░███░░░░░░   ░███   ░███  ░███ ░░██████     ░███     ░███░░░░░███        ░███  ░███░░█    ░░░░░░░░███",
+        " ░███         ░███   ░███  ░███  ░░█████     ░███     ░███    ░███  ███   ░███  ░███ ░   █ ███    ░███",
+        " █████        ░░████████   █████  ░░█████    █████    █████   █████░░████████   ██████████░░█████████ ",
+        "░░░░░          ░░░░░░░░   ░░░░░    ░░░░░    ░░░░░    ░░░░░   ░░░░░  ░░░░░░░░   ░░░░░░░░░░  ░░░░░░░░░  "
+    };
+
+    for (int i = 0; i < 16; i++) {            
+        mvprintw(text1Y++, text1X, "%s", texto[i]);
+    }
+    refresh();
+
+    WINDOW* rankingWIN = newwin(puntajes.size()+4, 35, text1Y+2, text1X+31);
+    werase(rankingWIN);
+    box(rankingWIN, 0, 0);  
+
+    text1Y += 3;
+    if (puntajes.size() > 0) {
+        mvprintw(text1Y, text1X+33, "%s", "     NOMBRE\tPUNTAJE");
+        text1Y += 2;
+        for (int i = 0; i < puntajes.size(); i++) {
+            std::string texto = "  " + std::to_string(i+1) + ". " + nombres[i] + "\t" + std::to_string(puntajes[i]);
+            mvprintw(text1Y++, text1X+33, "%s", texto.c_str());
+        }
+    } else {
+        for (int i = 0; i <= 5; i++) {
+            mvprintw(text1Y++, text1X, "%s", ". HOLAAAS");
+        }
+    }
+    wrefresh(rankingWIN);      //Dibuja el mapa apartir de la matriz
+}
+
+void obtenerCaracteres(char *text,int y, int x) {
+    echo();  // Mostrar lo que el usuario escribe
+    curs_set(1);  // Hacer visible el cursor
+    int ch;
+    int len = 0;
+
+    mvprintw(y-1, x, "%s", "Ingrese su nombre (Solo tres caracteres)");
+    while (len < 3) {
+        ch = mvwgetch(stdscr, y, x + len);  // Lee carácter por carácter
+
+        if (ch == ERR || ch == '\n') continue;  // Ignora errores o Enter
+        if (ch == 127 || ch == KEY_BACKSPACE) {  // Backspace
+            if (len > 0) {
+                len--;
+                mvwaddch(stdscr, y, x + len, ' ');  // Borra el carácter
+            }
+            continue;
+        }
+
+        text[len] = ch;
+        len++;
+    }
+    text[len] = '\0';  // Termina la cadena
+    curs_set(0);  // Oculta el cursor
+}
+
+void procesoPuntajes(int centerVertical, int centerHorizontal) {
+    bool nuevoPuntaje = false;
+    if (puntajes.size() > 0) {        
+        int i = 0;
+        while(!nuevoPuntaje) {
+            if (puntajes[i] == puntaje) {
+                puntajes[i++] = puntaje;
+                nuevoPuntaje = true;
+            }
+        }
+    } else {
+        if (puntaje > 0) {
+            puntajes.push_back(puntaje);            
+            nuevoPuntaje = true;
+        }
+    }
+
+    char name[3];
+    obtenerCaracteres(name, 20, 20);
+    std::string nameString(name);
+    nombres.push_back(nameString);    
+    clear();
+    
+    printPantallaPuntajes(centerVertical, centerHorizontal, nuevoPuntaje);
 }
 
 int main() {
@@ -689,56 +798,61 @@ int main() {
     
 
 	while (ejecutando) {
-		    static int last_lines = LINES, last_cols = COLS;
-		    if (LINES != last_lines || COLS != last_cols) {
-		        last_lines = LINES;
-		        last_cols = COLS;
-		        
-		        start_y = (LINES - win_height) / 2;
-		        start_x = (COLS - win_width) / 2;
-		        
-		        mvwin(gamewin, start_y, start_x);
-                mvwin(info_win, start_y, start_x + win_width + 1);
-		        touchwin(stdscr);
-		        redrawwin(stdscr);
-		    }
-			
-            if (nivelActual == 1 && cantEnemigos == 0) {
-                cantEnemigos = 3;
-                jugador_x=9;
-                jugador_y=8;
-                totem_x = 6;
-                totem_y = 8;
-                nivelActual++;
-                for (auto it = disparos.begin(); it != disparos.end();) {
-                    it = disparos.erase(it);
-                }
-                for (int i = 0; i < 10; i++) {
-                    for (int j = 0; j < 12; j++) {
-                        copia_mapa[i][j] = mapa2[i][j];
-                    }
-                } 
-            }
+        static int last_lines = LINES, last_cols = COLS;
+        if (LINES != last_lines || COLS != last_cols) {
+            last_lines = LINES;
+            last_cols = COLS;
             
-               if (nivelActual == 2 && cantEnemigos == 0) {
-                cantEnemigos = 3;
-                nivelActual++;
-                jugador_x=0;
-                jugador_y=2;
-                totem_x = 4;
-                totem_y = 0;
-                for (auto it = disparos.begin(); it != disparos.end();) {
-                    it = disparos.erase(it);
+            start_y = (LINES - win_height) / 2;
+            start_x = (COLS - win_width) / 2;
+            
+            mvwin(gamewin, start_y, start_x);
+            mvwin(info_win, start_y, start_x + win_width + 1);
+            touchwin(stdscr);
+            redrawwin(stdscr);
+        }
+            
+        if (nivelActual == 1 && cantEnemigos == 0) {
+            puntaje = puntaje*vidas;
+            cantEnemigos = 3;
+            jugador_x=9;
+            jugador_y=8;
+            totem_x = 6;
+            totem_y = 8;
+            nivelActual++;
+            for (auto it = disparos.begin(); it != disparos.end();) {
+                it = disparos.erase(it);
+            }
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 12; j++) {
+                    copia_mapa[i][j] = mapa2[i][j];
                 }
-                for (int i = 0; i < 10; i++) {
-                    for (int j = 0; j < 12; j++) {
-                        copia_mapa[i][j] = mapa3[i][j];
+            } 
+        }
+            
+            if (nivelActual == 2 && cantEnemigos == 0) {
+                puntaje = puntaje*vidas;
+                if (nivelActual == 2 && cantEnemigos == 0) {
+                    cantEnemigos = 3;
+                    nivelActual++;
+                    jugador_x=0;
+                    jugador_y=2;
+                    totem_x = 4;
+                    totem_y = 0;
+                    for (auto it = disparos.begin(); it != disparos.end();) {
+                        it = disparos.erase(it);
                     }
-                } 
+                    for (int i = 0; i < 10; i++) {
+                        for (int j = 0; j < 12; j++) {
+                            copia_mapa[i][j] = mapa3[i][j];
+                        }
+                    }  
+                }
             }
 
             //Nivel 4
             if (nivelActual == 3 && cantEnemigos == 0) {
+                puntaje = puntaje*vidas;
                 cantEnemigos = 4;
                 nivelActual++;
                 totem_x = 6;
@@ -757,6 +871,7 @@ int main() {
             
             //Nivel 5
             if (nivelActual == 4 && cantEnemigos == 0) {
+                puntaje = puntaje*vidas;
                 cantEnemigos = 2;
                 nivelActual++;
                 jugador_x=11;
@@ -770,9 +885,9 @@ int main() {
             }
 
 
-		    
-		    werase(gamewin);        
-		    box(gamewin, 0, 0);         //Dibuja los bordes de la pantalla
+            
+            werase(gamewin);        
+            box(gamewin, 0, 0);         //Dibuja los bordes de la pantalla
             int prev_enemy_y;
             int prev_enemy_x; 
             
@@ -780,7 +895,7 @@ int main() {
             {
                 enemigo->mover(); //Se mueve el enemigo
             }
-		    else{
+            else{
                 auto ahora = std::chrono::steady_clock::now();
                 auto duracion = std::chrono::duration_cast<std::chrono::seconds>(ahora - congelar_inicio);
                 if (duracion.count() >= 2) {
@@ -797,7 +912,7 @@ int main() {
                 }
             }
 
-		    dibujar_mapa(gamewin, copia_mapa);
+            dibujar_mapa(gamewin, copia_mapa);
             //Lineas para dibujar un cuadro con la información de la partida
             werase(info_win);
             box(info_win, 0, 0);  // Borde de la ventana de info
@@ -813,29 +928,29 @@ int main() {
 
 
             wrefresh(info_win);      //Dibuja el mapa apartir de la matriz
-		    wrefresh(gamewin);          //refresh para el renderizado
+            wrefresh(gamewin);          //refresh para el renderizado
 
-		    ch = getch();
-		    if (ch == 'q') 
+            ch = getch();
+            if (ch == 'q') 
             {
                 juego=false;
                 break;
             }       //Opción para salir del juego
 
-		    int new_y = jugador_y;
-		    int new_x = jugador_x;
+            int new_y = jugador_y;
+            int new_x = jugador_x;
 
             if(!congelar)
             {
-		        enemigo->disparar(gamewin);
+                enemigo->disparar(gamewin);
             }
-		    //Para determinar los movimientos del jugador 
-		    switch (ch) {
-		        case KEY_UP:    new_y--; direccion = KEY_UP; tank.set_direccion(0); break;
-		        case KEY_DOWN:  new_y++; direccion = KEY_DOWN; tank.set_direccion(1); break;
-		        case KEY_LEFT:  new_x--; direccion = KEY_LEFT; tank.set_direccion(3); break;
-		        case KEY_RIGHT: new_x++; direccion = KEY_RIGHT; tank.set_direccion(2); break;
-		        case ' ': 
+            //Para determinar los movimientos del jugador 
+            switch (ch) {
+                case KEY_UP:    new_y--; direccion = KEY_UP; tank.set_direccion(0); break;
+                case KEY_DOWN:  new_y++; direccion = KEY_DOWN; tank.set_direccion(1); break;
+                case KEY_LEFT:  new_x--; direccion = KEY_LEFT; tank.set_direccion(3); break;
+                case KEY_RIGHT: new_x++; direccion = KEY_RIGHT; tank.set_direccion(2); break;
+                case ' ': 
                 
                     auto now = std::chrono::steady_clock::now();
                     double elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(now - lastShot).count();
@@ -849,44 +964,44 @@ int main() {
                         lastShot = now;
                     }
                     break;
-		        
-		    }            
+                
+            }            
 
-		    //Condicionales para que el jugador no pueda atravesar los bloques
-		    if (new_y >= 0 && new_y < 10 && new_x >= 0 && new_x < 12) {
-		        if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3 && 
+            //Condicionales para que el jugador no pueda atravesar los bloques
+            if (new_y >= 0 && new_y < 10 && new_x >= 0 && new_x < 12) {
+                if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3 && 
                     copia_mapa[new_y][new_x] != 6 && copia_mapa[new_y][new_x] != 7 && copia_mapa[new_y][new_x] != 8 
                     && (new_x != enemigo->getPosX()|| new_y != enemigo->getPosY())) {
-		            jugador_y = new_y;
-		            jugador_x = new_x;
-		        }
-		    }
+                    jugador_y = new_y;
+                    jugador_x = new_x;
+                }
+            }
 
-		    for (auto& d : disparos) {
-		        d.y += d.dy;
-		        d.x += d.dx;
-		    }
-		    
-		    
+            for (auto& d : disparos) {
+                d.y += d.dy;
+                d.x += d.dx;
+            }
+            
+            
 
-		    //Determina dónde irán los disparos, también maneja el efecto de destrucción de los bloques
-		    for (auto it = disparos.begin(); it != disparos.end();) {
+            //Determina dónde irán los disparos, también maneja el efecto de destrucción de los bloques
+            for (auto it = disparos.begin(); it != disparos.end();) {
 
-		        if (it->x < 0 || it->x >= 12 || it->y < 0 || it->y >= 10) {
-		            it = disparos.erase(it);
-		        } else if (copia_mapa[it->y][it->x] == 1 ||copia_mapa[it->y][it->x] == 6 
+                if (it->x < 0 || it->x >= 12 || it->y < 0 || it->y >= 10) {
+                    it = disparos.erase(it);
+                } else if (copia_mapa[it->y][it->x] == 1 ||copia_mapa[it->y][it->x] == 6 
                 ||copia_mapa[it->y][it->x] == 7 ||copia_mapa[it->y][it->x] == 8) {
-		            destruccion_estructura(it->y, it->x);
-		            //efecto_destruccion(gamewin, it->y, it->x);
+                    destruccion_estructura(it->y, it->x);
+                    //efecto_destruccion(gamewin, it->y, it->x);
                     if(nivelActual!=5 ||(nivelActual==5 && it->fromPlayer))
-		                {
+                        {
                             it = disparos.erase(it); 
                         }
 
                     
-		        }
+                }
 
-		        else if ( it->fromPlayer
+                else if ( it->fromPlayer
                 && std::abs(it->y - enemigo->getPosY())
                     + std::abs(it->x - enemigo->getPosX()) <= 1 )
                     {   
@@ -903,6 +1018,23 @@ int main() {
                         system("aplay -q sounds/muerte.wav &");
                         efecto_destruccion(gamewin, it->y, it->x);
                         enemigo->morir();
+
+                        if(nivelActual ==1){
+                            puntaje += 10;
+                        }
+                        if(nivelActual ==2){
+                            puntaje += 20;
+                        }
+                        if(nivelActual ==3){
+                            puntaje += 30;
+                        }
+                        if(nivelActual ==4){
+                            puntaje += 40;
+                        }
+                        if(nivelActual ==5){
+                            puntaje += 50;
+                        }
+
                         puntaje += 10;
                         indice_actual++;
                         if (indice_actual < enemigos.size()) {
@@ -916,55 +1048,56 @@ int main() {
                         it = disparos.erase(it);
                         continue;
                     }
-		        //LO que sucede si se impacta jugador
-		        else if (it->y == jugador_y && it->x == jugador_x)
-		        {   
+                //LO que sucede si se impacta jugador
+                else if (it->y == jugador_y && it->x == jugador_x)
+                {   
                     if(escudo)
                     {   
                         it = disparos.erase(it);
                         continue;
                     }
-		        	copia_mapa[it->y][it->x] = 0;
-		            system("aplay -q sounds/destruccion.wav &");
-		            vidas--;
-		            if(vidas == 0)
-		           {
-		           	//efecto_destruccion(gamewin, it->y, it->x);
-					jugador_y = -10;
-		            jugador_x = -10;
-		            it = disparos.erase(it);
-		            ejecutando = false;
+                    copia_mapa[it->y][it->x] = 0;
+                    system("aplay -q sounds/destruccion.wav &");
+                    vidas--;
+                    if(vidas == 0)
+                    {
+                    //efecto_destruccion(gamewin, it->y, it->x);
+                    jugador_y = -10;
+                    jugador_x = -10;
+                    it = disparos.erase(it);
+                    ejecutando = false;
                     system("aplay -q sounds/muerte.wav &");
                     break;
 
-		           }
-		           else 
-		           {
-		           	jugador_y = 9;
-		           	jugador_x = 8;
+                    }
+                    else 
+                    {
+                    jugador_y = 9;
+                    jugador_x = 8;
                     continue;
-		           }
-		            
-		        }
-		        //Lo que sucede si se impacta la base
-		        else if(copia_mapa[it->y][it->x] == 3)
-		        {
-		        	copia_mapa[it->y][it->x] = 0;
-		            system("aplay -q sounds/destruccion.wav &");
-		            vidas=0; 
-		           	//efecto_destruccion(gamewin, it->y, it->x);
-					jugador_y = -10;
-		            jugador_x = -10;
-		            it = disparos.erase(it);
-		            ejecutando = false;
+                    }
+                    
+                }
+                //Lo que sucede si se impacta la base
+                else if(copia_mapa[it->y][it->x] == 3)
+                {
+                    copia_mapa[it->y][it->x] = 0;
+                    system("aplay -q sounds/destruccion.wav &");
+                    vidas=0; 
+                    //efecto_destruccion(gamewin, it->y, it->x);
+                    jugador_y = -10;
+                    jugador_x = -10;
+                    it = disparos.erase(it);
+                    ejecutando = false;
                     break;
-	  
-		        }
-		        else {
-		            ++it;
-		        }
-		    }
-		}
+        
+                }
+                else {
+                    ++it;
+                }
+            }
+	}
+
 	werase(gamewin);
     wrefresh(gamewin);
 
@@ -975,13 +1108,22 @@ int main() {
         printPantallaGanar(centerVertical,centerHorizontal);
     } else {
         printPantallaFinal(centerVertical, centerHorizontal);
- 
     }
+
+    while (true) {
+        ch = getch();
+
+        if (ch == 'q') {
+            break;
+        }
+    }
+
     clear();
     reiniciar_valores();
     refresh();
+    procesoPuntajes(centerVertical, centerHorizontal);
 
-}
+
     clear();
     timeout(-1);
     getch();
@@ -989,4 +1131,5 @@ int main() {
     delwin(gamewin);
     endwin();
     return 0;
+}
 }

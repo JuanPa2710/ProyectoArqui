@@ -31,10 +31,10 @@ public:
             }
             contador_disparo = 0;
 
-                disparos.push_back({posicion_y, posicion_x, 1, 0, false});
-                disparos.push_back({posicion_y, posicion_x, -1, 0, false});
-                disparos.push_back({posicion_y, posicion_x, 0, 1, false});
-                disparos.push_back({posicion_y, posicion_x, 0, -1, false});
+                disparos.push_back({posicion_y, posicion_x, 1, 0, false, false});
+                disparos.push_back({posicion_y, posicion_x, -1, 0, false, false});
+                disparos.push_back({posicion_y, posicion_x, 0, 1, false, false});
+                disparos.push_back({posicion_y, posicion_x, 0, -1, false, false});
             
         }
 

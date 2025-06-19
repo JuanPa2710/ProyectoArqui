@@ -31,7 +31,7 @@ public:
             if(posicion_x == jugador_x || posicion_x == totem_x) {
                 if(jugador_y - posicion_y < 0 ||totem_y - posicion_y < 0){
                     for (int i = posicion_y; i >= 0; i--){
-                        if(copia_mapa[i][posicion_x] == 1 || copia_mapa[i][posicion_x] == 2){
+                        if(copia_mapa[i][posicion_x] == 1 || copia_mapa[i][posicion_x] == 2 || copia_mapa[i][posicion_x] == 6 || copia_mapa[i][posicion_x] == 7 || copia_mapa[i][posicion_x] == 8){
                             break;
                         }else if(i == jugador_y || i== totem_y){
                             disparoEnemigo = true;
@@ -41,7 +41,7 @@ public:
                     }
                 }else{
                     for (int i = posicion_y; i <= 11; i++){
-                        if(copia_mapa[i][posicion_x] == 1 || copia_mapa[i][posicion_x] == 2){
+                        if(copia_mapa[i][posicion_x] == 1 || copia_mapa[i][posicion_x] == 2 || copia_mapa[i][posicion_x] == 6 || copia_mapa[i][posicion_x] == 7 || copia_mapa[i][posicion_x] == 8){
                             break;
                         }else if(i == jugador_y || i== totem_y ){
                             disparoEnemigo = true;
@@ -54,7 +54,7 @@ public:
             }else if(posicion_y == jugador_y || posicion_y == totem_y){
                 if(jugador_x - posicion_x < 0 ||totem_x - posicion_x < 0){
                     for (int i = posicion_x; i >= 0; i--){
-                        if(copia_mapa[posicion_y][i] == 1 || copia_mapa[posicion_y][i] == 2){
+                        if(copia_mapa[posicion_y][i] == 1 || copia_mapa[posicion_y][i] == 2  || copia_mapa[posicion_y][i] == 6 || copia_mapa[posicion_y][i] == 7 || copia_mapa[posicion_y][i] == 8 ){
                             break;
                         }else if(i == jugador_x || i== totem_x){
                             disparoEnemigo = true;
@@ -64,7 +64,7 @@ public:
                     }
                 }else{
                     for (int i = posicion_x; i <= 9; i++){
-                        if(copia_mapa[posicion_y][i] == 1 || copia_mapa[posicion_y][i] == 2){
+                        if(copia_mapa[posicion_y][i] == 1 || copia_mapa[posicion_y][i] == 2 || copia_mapa[posicion_y][i] == 6 || copia_mapa[posicion_y][i] == 7 || copia_mapa[posicion_y][i] == 8){
                             break;
                         }else if(i == jugador_x || i== totem_x){
                             disparoEnemigo = true;
@@ -143,10 +143,9 @@ public:
                         disparo_y++;
                         break;
                 }
-                disparos.push_back({posicion_y, posicion_x, disparo_x, disparo_y, false});
+                disparos.push_back({posicion_y, posicion_x, disparo_x, disparo_y, false, false});
             }
         }
 
 };
 #endif
-

@@ -99,6 +99,7 @@ int vidas = 4;
 
 // puntaje
 int puntaje = 0;
+int puntaje_nivel = 0;
 
 //Nivel actual
 int nivelActual = 1;   
@@ -190,6 +191,8 @@ void reiniciar_valores()
     // puntaje
     puntaje = 0;
 
+    //puntaje por nivel
+    puntaje_nivel= 0;
 
     //Nivel actual
     nivelActual = 1;    
@@ -408,8 +411,9 @@ void printPantallaNivelCompletado(int centerVertical, int centerHorizontal, int 
     int textY = centerVertical - 10;
 
     mvprintw(textY++, textX + 20, "Nivel completado: %d", nivel);
-    mvprintw(textY++, textX + 20, "Puntaje obtenido: %d", puntaje);
-    mvprintw(textY++, textX + 20, "Presiona cualquier tecla para continuar...");
+    mvprintw(textY++, textX + 20, "Puntaje obtenido en el nivel: %d", puntaje_nivel);
+    mvprintw(textY++, textX + 20, "Puntaje hasta ahora obtenido: %d", puntaje);
+    mvprintw(textY++, textX + 20, "Presiona 'q' continuar...");
 
     refresh();
     int ch;
@@ -921,11 +925,12 @@ void cargarRecursos(WINDOW* &gamewin, int &op, int &win_height, int &win_width, 
 
 void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int &totem_x, int &totem_y) {
     // Carga nivel 2
+            int x, y;
     if (nivelActual == 1 && cantEnemigos == 0) {
-        int x, y;
         getmaxyx(stdscr, y, x);
         clear();
         printPantallaNivelCompletado(y/2, x/2, nivelActual, puntaje);
+        puntaje_nivel = 0;
         cantEnemigos = 4;
         jugador_x=9;
         jugador_y=8;
@@ -946,8 +951,12 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
        
      // Carga nivel 3
     if (nivelActual == 2 && cantEnemigos == 0) {
+            getmaxyx(stdscr, y, x);
+        clear();
+        printPantallaNivelCompletado(y/2, x/2, nivelActual, puntaje);
         cantEnemigos = 4;
         nivelActual++;
+        puntaje_nivel = 0;
         jugador_x=0;
         jugador_y=0;
         totem_x = 4;
@@ -966,8 +975,12 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
 
      // Carga nivel 4
     if (nivelActual == 3 && cantEnemigos == 0) {
+        getmaxyx(stdscr, y, x);
+        clear();
+    printPantallaNivelCompletado(y/2, x/2, nivelActual, puntaje);
         cantEnemigos = 4;
         nivelActual++;
+        puntaje_nivel = 0;
         totem_x = 6;
         totem_y = 9;
         jugador_x=0;
@@ -986,6 +999,10 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
         
      // Carga nivel 5
     if (nivelActual == 4 && cantEnemigos == 0) {
+        getmaxyx(stdscr, y, x);
+        clear();
+    	printPantallaNivelCompletado(y/2, x/2, nivelActual, puntaje);
+        puntaje_nivel = 0;
         cantEnemigos = 3;
         nivelActual++;
         jugador_x=11;
@@ -1000,6 +1017,200 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
         enemigosActuales.emplace_back(enemigos[++indice_actual].get());
         enemigosActuales.emplace_back(enemigos[++indice_actual].get());
     } 
+}
+
+void manejoEnemigos(WINDOW *gamewin)
+{
+        if(!congelar)
+        {
+            for (auto& enemigo : enemigosActuales) {
+            enemigo->mover();
+            }
+            for (auto& enemigo : enemigosActuales) {
+                enemigo->disparar(gamewin);
+            }
+        }
+        else{
+            auto ahora = std::chrono::steady_clock::now();
+            auto duracion = std::chrono::duration_cast<std::chrono::seconds>(ahora - congelar_inicio);
+            if (duracion.count() >= 2) {
+                congelar = false;
+            }                
+        }
+        
+        if(escudo)
+        {  
+            auto ahora = std::chrono::steady_clock::now();
+            auto duracion = std::chrono::duration_cast<std::chrono::seconds>(ahora - escudo_inicio);
+            if (duracion.count() >= 5) {
+                escudo = false;
+            }
+        }
+    
+}
+
+void entradaTecleado(int &new_y, int &new_x, int &ch)
+{
+ switch (ch) {
+    case KEY_UP:    new_y--; direccion = KEY_UP; tank.set_direccion(0); break;
+    case KEY_DOWN:  new_y++; direccion = KEY_DOWN; tank.set_direccion(1); break;
+    case KEY_LEFT:  new_x--; direccion = KEY_LEFT; tank.set_direccion(3); break;
+    case KEY_RIGHT: new_x++; direccion = KEY_RIGHT; tank.set_direccion(2); break;
+    case ' ': 
+    
+        auto now = std::chrono::steady_clock::now();
+        double elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(now - lastShot).count();
+        if (elapsed >= COOLDOWN) {
+            int dy = 0, dx = 0;
+            if (direccion == KEY_UP)    dy = -1;
+            else if (direccion == KEY_DOWN)  dy =  1;
+            else if (direccion == KEY_LEFT)  dx = -1;
+            else if (direccion == KEY_RIGHT) dx =  1;
+            disparos.push_back({ jugador_y, jugador_x, dx, dy, true, false });
+            lastShot = now;
+        }
+        break;
+        
+    }         
+
+
+    //Condicionales para que el jugador no pueda atravesar los bloques
+    if (new_y >= 0 && new_y < 10 && new_x >= 0 && new_x < 12) {
+        if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3
+        && copia_mapa[new_y][new_x] != 6 && copia_mapa[new_y][new_x] != 7 && copia_mapa[new_y][new_x] != 8) {
+            for (auto& enemigo : enemigosActuales) {
+                if(new_x == enemigo->getPosX() && new_y == enemigo->getPosY()){
+                    new_y = jugador_y;
+                    new_x = jugador_x;
+                }
+            }
+            jugador_y = new_y;
+            jugador_x = new_x;
+        }
+    }
+
+}
+
+void logicaJuego(int &cantEnemigos, bool &ejecutando)
+{
+for (auto it = disparos.begin(); it != disparos.end();) {
+        bool eliminar = false;
+        if (it->x < 0 || it->x >= 12 || it->y < 0 || it->y >= 10) {
+            eliminar = true;
+        } else if (copia_mapa[it->y][it->x] == 1 || copia_mapa[it->y][it->x] == 2 || copia_mapa[it->y][it->x] == 6 
+        ||copia_mapa[it->y][it->x] == 7 ||copia_mapa[it->y][it->x] == 8) {
+            destruccion_estructura(it->y, it->x);
+            //efecto_destruccion(gamewin, it->y, it->x);
+            if(nivelActual!=5 ||(nivelActual==5 && it->fromPlayer))
+                eliminar = true;
+        }
+        else if (it->fromPlayer)
+        {   
+            for (auto& enemigo : enemigosActuales) {
+                if (std::abs(it->y - enemigo->getPosY()) + std::abs(it->x - enemigo->getPosX()) <= 1 ){
+                    if(nivelActual == 5 && enemigo->get_impactos_destruccion()>1)
+                    {
+                        system("aplay -q sounds/disparoBlindado.wav &");
+                        enemigo->nuevo_impacto();
+                        eliminar = true;
+                        break;
+                        
+                    }
+                    copia_mapa[it->y][it->x] = 0;
+                    system("aplay -q sounds/muerte.wav &");
+                    cantEnemigos--;
+                    enemigo->morir();
+                    puntaje += 10;     
+                    puntaje_nivel+=10;                       
+                    if (indice_actual < enemigos.size()-1) {
+
+                    } else {
+                    if(cantEnemigos ==0)
+                    {
+                        ejecutando = false;
+                        ganar = true;
+                        break;
+                    }
+                    }
+                    if (cantEnemigos >= 2 && nivelActual!=5){
+                        enemigosActuales.emplace_back(enemigos[++indice_actual].get());
+                    }
+                    eliminar = true;
+                    break;
+                }
+            }
+            if(copia_mapa[it->y][it->x] == 3)
+            {
+                copia_mapa[it->y][it->x] = 0;
+                system("aplay -q sounds/destruccion.wav &");
+                vidas=0; 
+                //efecto_destruccion(gamewin, it->y, it->x);
+                jugador_y = -10;
+                jugador_x = -10;
+                eliminar = true;
+                ejecutando = false;
+                break;
+
+            }
+        }
+        //LO que sucede si se impacta jugador
+        else if (it->y == jugador_y && it->x == jugador_x)
+        {   
+            if(escudo)
+            {   
+                it = disparos.erase(it);                       
+                continue;
+            }
+            copia_mapa[it->y][it->x] = 0;
+            system("aplay -q sounds/destruccion.wav &");
+            vidas--;
+            if(vidas == 0)
+            {
+            //efecto_destruccion(gamewin, it->y, it->x);
+            jugador_y = -10;
+            jugador_x = -10;
+            eliminar = true;
+            ejecutando = false;
+            ganar = false;
+            system("aplay -q sounds/muerte.wav &");
+            break;
+
+            }
+            else 
+            {	if(nivelActual==3)
+        {
+            jugador_y = 0;
+            jugador_x = 0;
+            continue;
+        }
+            jugador_y = 9;
+            jugador_x = 8;
+                    continue;
+            }
+            
+        }
+        //Lo que sucede si se impacta la base
+        else if(copia_mapa[it->y][it->x] == 3)
+        {
+            copia_mapa[it->y][it->x] = 0;
+            system("aplay -q sounds/destruccion.wav &");
+            vidas=0; 
+            //efecto_destruccion(gamewin, it->y, it->x);
+            jugador_y = -10;
+            jugador_x = -10;
+            eliminar = true;
+            ejecutando = false;
+            break;
+
+        }
+        if (eliminar) {
+            it = disparos.erase(it);
+            continue;
+        } else {
+            ++it;
+        }
+    }
+
 }
 
 void renderizadoJuego(WINDOW* gamewin, int &op) {   
@@ -1032,6 +1243,8 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
 
 	while (ejecutando) {
 
+
+        
         static int last_lines = LINES, last_cols = COLS;
         if (LINES != last_lines || COLS != last_cols) {
             last_lines = LINES;
@@ -1050,46 +1263,14 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
         box(gamewin, 0, 0);         //Dibuja los bordes de la pantalla
         dibujar_mapa(gamewin, copia_mapa);
         
-        if(!congelar)
-        {
-            for (auto& enemigo : enemigosActuales) {
-            enemigo->mover();
-            }
-        }
-        else{
-            auto ahora = std::chrono::steady_clock::now();
-            auto duracion = std::chrono::duration_cast<std::chrono::seconds>(ahora - congelar_inicio);
-            if (duracion.count() >= 2) {
-                congelar = false;
-            }                
-        }
-        
-        if(escudo)
-        {  
-            auto ahora = std::chrono::steady_clock::now();
-            auto duracion = std::chrono::duration_cast<std::chrono::seconds>(ahora - escudo_inicio);
-            if (duracion.count() >= 5) {
-                escudo = false;
-            }
-        }
-
-        
-
-
-
-
-
-
-
-
-
-
+        manejoEnemigos(gamewin);
 
         //Lineas para dibujar un cuadro con la información de la partida
         werase(info_win);
         box(info_win, 0, 0);  // Borde de la ventana de info
         mvwprintw(info_win, 2, 2, "Nivel:   %d", nivelActual);
-        mvwprintw(info_win, 4, 2, "Puntaje: %d", puntaje);
+        mvwprintw(info_win, 4, 2, "Puntaje del nivel: %d", puntaje_nivel);
+        mvwprintw(info_win, 6, 2, "Puntaje: %d", puntaje);
 
         //mvwprintw(info_win, 6, 2, "Vidas:   %d", vidas);
         mvwprintw(info_win, 6, 2, "Vidas: ");
@@ -1101,61 +1282,21 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
         wrefresh(info_win);      //Dibuja el mapa apartir de la matriz
         wrefresh(gamewin);       //refresh para el renderizado
 
+        //Opción para salir del juego
         ch = getch();
         if (ch == 'q') 
         {
             juego=false;
             break;
-        }       //Opción para salir del juego
+        }       
 
         int new_y = jugador_y;
         int new_x = jugador_x;
 
-        if(!congelar)
-        {
-            for (auto& enemigo : enemigosActuales) {
-                enemigo->disparar(gamewin);
-            }
-        }
+
 
         //Para determinar los movimientos del jugador 
-        switch (ch) {
-            case KEY_UP:    new_y--; direccion = KEY_UP; tank.set_direccion(0); break;
-            case KEY_DOWN:  new_y++; direccion = KEY_DOWN; tank.set_direccion(1); break;
-            case KEY_LEFT:  new_x--; direccion = KEY_LEFT; tank.set_direccion(3); break;
-            case KEY_RIGHT: new_x++; direccion = KEY_RIGHT; tank.set_direccion(2); break;
-            case ' ': 
-            
-                auto now = std::chrono::steady_clock::now();
-                double elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(now - lastShot).count();
-                if (elapsed >= COOLDOWN) {
-                    int dy = 0, dx = 0;
-                    if (direccion == KEY_UP)    dy = -1;
-                    else if (direccion == KEY_DOWN)  dy =  1;
-                    else if (direccion == KEY_LEFT)  dx = -1;
-                    else if (direccion == KEY_RIGHT) dx =  1;
-                    disparos.push_back({ jugador_y, jugador_x, dx, dy, true, false });
-                    lastShot = now;
-                }
-                break;
-            
-        }         
-
-
-        //Condicionales para que el jugador no pueda atravesar los bloques
-        if (new_y >= 0 && new_y < 10 && new_x >= 0 && new_x < 12) {
-            if (copia_mapa[new_y][new_x] != 1 && copia_mapa[new_y][new_x] != 2 && copia_mapa[new_y][new_x] != 3
-            && copia_mapa[new_y][new_x] != 6 && copia_mapa[new_y][new_x] != 7 && copia_mapa[new_y][new_x] != 8) {
-                for (auto& enemigo : enemigosActuales) {
-                    if(new_x == enemigo->getPosX() && new_y == enemigo->getPosY()){
-                        new_y = jugador_y;
-                        new_x = jugador_x;
-                    }
-                }
-                jugador_y = new_y;
-                jugador_x = new_x;
-            }
-        }
+       entradaTecleado(new_y, new_x, ch);
 
         for (auto& d : disparos) {
             d.y += d.dy;
@@ -1163,124 +1304,7 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
         }    
 
         //Determina dónde irán los disparos, también maneja el efecto de destrucción de los bloques
-        for (auto it = disparos.begin(); it != disparos.end();) {
-            bool eliminar = false;
-            if (it->x < 0 || it->x >= 12 || it->y < 0 || it->y >= 10) {
-                eliminar = true;
-            } else if (copia_mapa[it->y][it->x] == 1 || copia_mapa[it->y][it->x] == 2 || copia_mapa[it->y][it->x] == 6 
-            ||copia_mapa[it->y][it->x] == 7 ||copia_mapa[it->y][it->x] == 8) {
-                destruccion_estructura(it->y, it->x);
-                //efecto_destruccion(gamewin, it->y, it->x);
-                if(nivelActual!=5 ||(nivelActual==5 && it->fromPlayer))
-                    eliminar = true;
-            }
-            else if (it->fromPlayer)
-            {   
-                for (auto& enemigo : enemigosActuales) {
-                    if (std::abs(it->y - enemigo->getPosY()) + std::abs(it->x - enemigo->getPosX()) <= 1 ){
-                        if(nivelActual == 5 && enemigo->get_impactos_destruccion()>1)
-                        {
-                            system("aplay -q sounds/disparoBlindado.wav &");
-                            enemigo->nuevo_impacto();
-                            eliminar = true;
-                            break;
-                            
-                        }
-                        copia_mapa[it->y][it->x] = 0;
-                        system("aplay -q sounds/muerte.wav &");
-                        cantEnemigos--;
-                        enemigo->morir();
-                        puntaje += 10;                            
-                        if (indice_actual < enemigos.size()-1) {
-
-                        } else {
-                        if(cantEnemigos ==0)
-                        {
-                            ejecutando = false;
-                            ganar = true;
-                            break;
-                        }
-                        }
-                        if (cantEnemigos >= 2 && nivelActual!=5){
-                            enemigosActuales.emplace_back(enemigos[++indice_actual].get());
-                        }
-                        eliminar = true;
-                        break;
-                    }
-                }
-                if(copia_mapa[it->y][it->x] == 3)
-                {
-                    copia_mapa[it->y][it->x] = 0;
-                    system("aplay -q sounds/destruccion.wav &");
-                    vidas=0; 
-                    //efecto_destruccion(gamewin, it->y, it->x);
-                    jugador_y = -10;
-                    jugador_x = -10;
-                    eliminar = true;
-                    ejecutando = false;
-                    break;
-    
-                }
-            }
-            //LO que sucede si se impacta jugador
-            else if (it->y == jugador_y && it->x == jugador_x)
-            {   
-                if(escudo)
-                {   
-                    it = disparos.erase(it);                       
-                    continue;
-                }
-                copia_mapa[it->y][it->x] = 0;
-                system("aplay -q sounds/destruccion.wav &");
-                vidas--;
-                if(vidas == 0)
-                {
-                //efecto_destruccion(gamewin, it->y, it->x);
-                jugador_y = -10;
-                jugador_x = -10;
-                eliminar = true;
-                ejecutando = false;
-                ganar = false;
-                system("aplay -q sounds/muerte.wav &");
-                break;
-
-                }
-                else 
-                {	if(nivelActual==3)
-            {
-                jugador_y = 0;
-                jugador_x = 0;
-                continue;
-            }
-                jugador_y = 9;
-                jugador_x = 8;
-                        continue;
-                }
-                
-            }
-            //Lo que sucede si se impacta la base
-            else if(copia_mapa[it->y][it->x] == 3)
-            {
-                copia_mapa[it->y][it->x] = 0;
-                system("aplay -q sounds/destruccion.wav &");
-                vidas=0; 
-                //efecto_destruccion(gamewin, it->y, it->x);
-                jugador_y = -10;
-                jugador_x = -10;
-                eliminar = true;
-                ejecutando = false;
-                break;
-    
-            }
-            if (eliminar) {
-                it = disparos.erase(it);
-                continue;
-            } else {
-                ++it;
-            }
-        }
-
-
+        logicaJuego(cantEnemigos, ejecutando);
         cargarSiguienteNivel(cantEnemigos, jugador_x, jugador_y, totem_x, totem_y);
 		    
     }

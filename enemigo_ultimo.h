@@ -18,7 +18,8 @@ public:
                 {L" ━ ", L"║█║", L" ▼"},  // abajo
             };
        
-       this->velocidad_disparo = 4;
+       this->velocidad_disparo =1;
+       this->velocidad_enemigo = 7;
 	}
 	
 	void disparar(WINDOW* ventana) override 
@@ -80,22 +81,26 @@ public:
 
 
             int disparo_x = 0, disparo_y = 0;
-            switch(direccion) {
-                case 1: // Este (derecha)
-                    disparo_x++;
-                    break;
-                case 2: // Oeste (izquierda)
-                    disparo_x--;
-                    break;
-                case 3: // Norte (arriba)
-                    disparo_y--;
-                    break;
-                case 4: // Sur (abajo)
-                    disparo_y++;
-                    break;
-                    }
-             disparos.push_back({posicion_y, posicion_x, disparo_x, disparo_y, false});
             
+                switch(direccion) {
+                    case 1: // Este (derecha)
+                        disparo_x++;
+                        break;
+                    case 2: // Oeste (izquierda)
+                        disparo_x--;
+                        break;
+                    case 3: // Norte (arriba)
+                        disparo_y--;
+                        break;
+                    case 4: // Sur (abajo)
+                        disparo_y++;
+                        break;
+                }
+                for(int i = posicion_x; 12>i; i++){
+                    
+                }
+                disparos.push_back({posicion_y, posicion_x, disparo_x, disparo_y, false});
+
             
         }
         

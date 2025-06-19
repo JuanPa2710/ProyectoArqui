@@ -385,11 +385,9 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
         }
         
         else{
-
             wattron(win, COLOR_PAIR(3));
             mvwaddwstr(win, wy, wx, L" *");
-            wattroff(win, COLOR_PAIR(3));
-                
+            wattroff(win, COLOR_PAIR(3));                
             }
         }
         
@@ -466,6 +464,21 @@ void printPantallaInicial(int centerHorizontal) {
     mvprintw(33, tempX, "%s", line19);
     mvprintw(34, tempX, "%s", line20);
     mvprintw(35, tempX, "%s", line21);
+}
+
+void printPantallaNivelCompletado(int centerVertical, int centerHorizontal, int nivel, int puntaje){
+    int textX = centerHorizontal - 46;
+    int textY = centerVertical - 10;
+
+    mvprintw(textY++, textX + 20, "Nivel completado: %d", nivel);
+    mvprintw(textY++, textX + 20, "Puntaje obtenido: %d", puntaje);
+    mvprintw(textY++, textX + 20, "Presiona cualquier tecla para continuar...");
+
+    refresh();
+    int ch;
+    while ((ch = getch())!= 'q')
+    {}
+    clear();
 }
 
 void printPantallaGanar(int centerVertical, int centerHorizontal) {
@@ -597,9 +610,9 @@ void printPantallaFinal(int centerVertical, int centerHorizontal) {
     refresh();
 }
 
-void printPantallaPuntajes(int centerVertical, int centerHorizontal, bool nuevoPuntaje) {
+void printPantallaPuntajes(int centerVertical, int centerHorizontal) {
     int text1X = centerHorizontal - 46;
-    int text1Y = centerVertical - 26;
+    int text1Y = centerVertical - 20;
 
     // Definir colores para simular transparencia (grises)
     init_pair(1, COLOR_WHITE, -1); 
@@ -647,59 +660,251 @@ void printPantallaPuntajes(int centerVertical, int centerHorizontal, bool nuevoP
             mvprintw(text1Y++, text1X, "%s", ". HOLAAAS");
         }
     }
+
+    text1Y += 5;
+    std::string text = "Tu puntaje en esta partida: " + std::to_string(puntaje);
+    mvprintw(text1Y++, text1X+33, "%s", text.c_str());
+
     wrefresh(rankingWIN);      //Dibuja el mapa apartir de la matriz
 }
 
-void obtenerCaracteres(char *text,int y, int x) {
-    echo();  // Mostrar lo que el usuario escribe
-    curs_set(1);  // Hacer visible el cursor
+int printPantallaVolverJugar(int centerVertical, int centerHorizontal) {
+    // Crear ventana centrada
+    int alto_menu = 12;
+    int ancho_menu = 50;
+    int start_y = (centerVertical - alto_menu) / 2;
+    int start_x = centerHorizontal - (ancho_menu / 2);
+    
+    WINDOW* ventana_menu = newwin(alto_menu, ancho_menu, start_y, start_x);
+    
+    std::vector<std::string> opciones = {"Sí, volver a jugar", "No, salir del juego"};
+    int seleccion = 0;
+    int tecla;
+    
+    while(true) {
+        // Limpiar y dibujar el cuadro
+        werase(ventana_menu);
+        box(ventana_menu, 0, 0);
+        
+        // Título principal
+        std::string titulo = "¿VOLVER A JUGAR?";
+        int pos_titulo = (ancho_menu - titulo.length()) / 2;
+        mvwprintw(ventana_menu, 2, pos_titulo, "%s", titulo.c_str());
+        
+        // Línea decorativa
+        for(int i = 1; i < ancho_menu - 1; i++) {
+            mvwprintw(ventana_menu, 4, i, "-");
+        }
+        
+        // Mostrar opciones
+        for(int i = 0; i < opciones.size(); i++) {
+            int pos_y = 6 + (i * 2);
+            int pos_x = (ancho_menu - opciones[i].length()) / 2;
+            
+            if(i == seleccion) {
+                wattron(ventana_menu, A_REVERSE | A_BOLD);
+                mvwprintw(ventana_menu, pos_y, pos_x - 2, "> %s <", opciones[i].c_str());
+                wattroff(ventana_menu, A_REVERSE | A_BOLD);
+            } else {
+                mvwprintw(ventana_menu, pos_y, pos_x, "%s", opciones[i].c_str());
+            }
+        }
+        
+        // Instrucciones
+        std::string instrucciones = "Usa ↑↓ para navegar, ENTER para seleccionar";
+        int pos_instr = (ancho_menu / 2) - (instrucciones.length() / 2) + 2;
+        mvwprintw(ventana_menu, 10, pos_instr, "%s", instrucciones.c_str());
+        
+        wrefresh(ventana_menu);
+        
+        // Manejar input
+        tecla = getch();
+        
+        switch(tecla) {
+            case KEY_UP:
+                seleccion = (seleccion - 1 + opciones.size()) % opciones.size();
+                break;
+                
+            case KEY_DOWN:
+                seleccion = (seleccion + 1) % opciones.size();
+                break;
+                
+            case 10: // ENTER
+            case 13: // ENTER alternativo
+                delwin(ventana_menu);
+                return seleccion; // 0 = Sí, 1 = No
+                
+            case 27: // ESC para cancelar
+                delwin(ventana_menu);
+                return -1;
+        }
+    }
+}
+
+void obtenerCaracteres(char *text, int y, int x) {
+    noecho();
+    curs_set(1);
+    keypad(stdscr, TRUE);
+    
+    mvprintw(y-1, x, "Ingrese su nombre (Solo tres letras):");
+    move(y, x);
+    refresh();
+    
     int ch;
     int len = 0;
-
-    mvprintw(y-1, x, "%s", "Ingrese su nombre (Solo tres caracteres)");
+    
     while (len < 3) {
-        ch = mvwgetch(stdscr, y, x + len);  // Lee carácter por carácter
-
-        if (ch == ERR || ch == '\n') continue;  // Ignora errores o Enter
-        if (ch == 127 || ch == KEY_BACKSPACE) {  // Backspace
+        ch = getch();
+        
+        // Filtrar cualquier cosa que no sea ASCII imprimible normal
+        if (ch < 0 || ch > 255) {
+            continue;  // Teclas especiales de ncurses
+        }
+        
+        // Manejar backspace
+        if (ch == 127 || ch == 8) {  // DEL o BS
             if (len > 0) {
                 len--;
-                mvwaddch(stdscr, y, x + len, ' ');  // Borra el carácter
+                move(y, x + len);
+                addch(' ');
+                move(y, x + len);
+                refresh();
             }
-            continue;
         }
-
-        text[len] = ch;
-        len++;
+        // Solo letras ASCII
+        else if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')) {
+            text[len] = ch;
+            addch(ch);
+            refresh();
+            len++;
+        }
     }
-    text[len] = '\0';  // Termina la cadena
-    curs_set(0);  // Oculta el cursor
+    
+    mvprintw(y+5, x, "Presiona Enter para continuar...");
+    refresh();
+    
+    while ((ch = getch()) != '\n' && ch != '\r') {
+        // Espera Enter
+    }
+    
+    text[3] = '\0';
+    
+    move(y+1, x);
+    clrtoeol();
+    
+    curs_set(0);
+}
+
+void mostrarCuadroIngresarNombre(char *nombre) {
+    int alto_ventana, ancho_ventana;
+    getmaxyx(stdscr, alto_ventana, ancho_ventana);
+    
+    // Crear ventana centrada
+    int alto_cuadro = 10;
+    int ancho_cuadro = 60;
+    int start_y = (alto_ventana - alto_cuadro) / 2;
+    int start_x = (ancho_ventana - ancho_cuadro) / 2;
+    
+    WINDOW* ventana_input = newwin(alto_cuadro, ancho_cuadro, start_y, start_x);
+    
+    // Dibujar el cuadro
+    box(ventana_input, 0, 0);
+    
+    // Título principal
+    std::string titulo = "INGRESO DE NOMBRE";
+    int pos_titulo = (ancho_cuadro - titulo.length()) / 2;
+    mvwprintw(ventana_input, 2, pos_titulo, "%s", titulo.c_str());
+    
+    // Línea decorativa
+    for(int i = 1; i < ancho_cuadro - 1; i++) {
+        mvwprintw(ventana_input, 3, i, "-");
+    }
+    
+    // Área de entrada con borde
+    for(int i = 5; i < 8; i++) {
+        mvwprintw(ventana_input, i, 10, "|");
+        mvwprintw(ventana_input, i, ancho_cuadro - 11, "|");
+    }
+    for(int i = 11; i < ancho_cuadro - 11; i++) {
+        mvwprintw(ventana_input, 5, i, "-");
+        mvwprintw(ventana_input, 7, i, "-");
+    }
+    mvwprintw(ventana_input, 5, 10, "+");
+    mvwprintw(ventana_input, 5, ancho_cuadro - 11, "+");
+    mvwprintw(ventana_input, 7, 10, "+");
+    mvwprintw(ventana_input, 7, ancho_cuadro - 11, "+");
+    
+    wrefresh(ventana_input);
+    
+    // Llamar a la función obtenerCaracteres con las coordenadas correctas
+    // Convertir coordenadas de ventana a coordenadas de pantalla
+    int input_y = start_y + 6;  // Dentro del cuadro de entrada
+    int input_x = start_x + 12; // Posición donde escribir
+    
+    obtenerCaracteres(nombre, input_y, input_x);
+    
+    // Limpiar la ventana
+    delwin(ventana_input);
+    clear();
+    refresh();
 }
 
 void procesoPuntajes(int centerVertical, int centerHorizontal) {
-    bool nuevoPuntaje = false;
-    if (puntajes.size() > 0) {        
-        int i = 0;
-        while(!nuevoPuntaje) {
-            if (puntajes[i] == puntaje) {
-                puntajes.insert(puntajes.begin(), i, puntaje);
-            }
-        }
-    } else {
-        puntajes.push_back(puntaje);            
-        nuevoPuntaje = true;
-    }    
-
+    const int MAX_PUNTAJES = 5;
     char name[3];
-    obtenerCaracteres(name, 20, 20);
-    std::string nameString(name);
-    nombres.push_back(nameString);    
+
     clear();
-    printPantallaPuntajes(centerVertical, centerHorizontal, nuevoPuntaje);
+    refresh();
+
+    mostrarCuadroIngresarNombre(name);
+    std::string nameString(name);
+    
+    // Si el vector está vacío o no está lleno, agrega
+    if (puntajes.size() < MAX_PUNTAJES) {
+        puntajes.push_back(puntaje);
+        nombres.push_back(nameString);
+    } else // Si está lleno, solo agregar si es mejor que el peor puntaje
+        if (puntaje > puntajes.back()) {
+            puntajes.push_back(puntaje);
+            nombres.push_back(nameString);
+    }
+    
+    // Crear índices para ordenar ambos vectores juntos
+    std::vector<int> indices(puntajes.size());
+    for (int i = 0; i < indices.size(); i++) {
+        indices[i] = i;
+    }
+    
+    // Ordenar índices basado en puntajes (mayor a menor)
+    std::sort(indices.begin(), indices.end(), [&](int a, int b) {
+        return puntajes[a] > puntajes[b];
+    });
+    
+    // Crear vectores temporales ordenados
+    std::vector<int> puntajesOrdenados;
+    std::vector<std::string> nombresOrdenados;
+    
+    for (int i : indices) {
+        puntajesOrdenados.push_back(puntajes[i]);
+        nombresOrdenados.push_back(nombres[i]);
+    }
+    
+    // Reemplazar vectores originales
+    puntajes = puntajesOrdenados;
+    nombres = nombresOrdenados;
+    
+    // Mantener top 5
+    if (puntajes.size() > MAX_PUNTAJES) {
+        puntajes.resize(MAX_PUNTAJES);
+        nombres.resize(MAX_PUNTAJES);
+    }
+
+    clear();
+    printPantallaPuntajes(centerVertical, centerHorizontal);
 }
 
-void renderizadoJuego(WINDOW* gamewin) {   
-        srand(time(NULL));
+void renderizadoJuego(WINDOW* gamewin, int &op) {   
+    srand(time(NULL));
     setlocale(LC_ALL, "");
     initscr();
     keypad(stdscr, TRUE);
@@ -766,13 +971,17 @@ void renderizadoJuego(WINDOW* gamewin) {
 
     int centerVertical = (LINES / 2);
     int centerHorizontal = (COLS / 2);
-
-    printPantallaInicial(centerHorizontal);
+    
+    if (op == 1) {
+        printPantallaInicial(centerHorizontal);
+    }
 
     refresh();
 
     timeout(-1);
-    getch();
+    if (op == 1) {
+        getch();
+    }
     timeout(100);
     clear();
 
@@ -785,7 +994,7 @@ void renderizadoJuego(WINDOW* gamewin) {
         for (int j = 0; j < 12; j++) {
             copia_mapa[i][j] = mapa[i][j];
         }
-    }   
+    }       
 
     
 
@@ -805,6 +1014,10 @@ void renderizadoJuego(WINDOW* gamewin) {
 		    }
 			
             if (nivelActual == 1 && cantEnemigos == 0) {
+                int x, y;
+                getmaxyx(stdscr, y, x);
+                clear();
+                printPantallaNivelCompletado(y/2, x/2, nivelActual, puntaje);
                 cantEnemigos = 4;
                 jugador_x=9;
                 jugador_y=8;
@@ -848,8 +1061,8 @@ void renderizadoJuego(WINDOW* gamewin) {
                 nivelActual++;
                 totem_x = 6;
                 totem_y = 9;
-                jugador_x=11;
-                jugador_y=8;
+                jugador_x=0;
+                jugador_y=0;
                 for (auto it = disparos.begin(); it != disparos.end();) {
                     it = disparos.erase(it);
                 }
@@ -875,8 +1088,8 @@ void renderizadoJuego(WINDOW* gamewin) {
                     }
                 } 
                 enemigosActuales.emplace_back(enemigos[++indice_actual].get());
-		enemigosActuales.emplace_back(enemigos[++indice_actual].get());
-        	enemigosActuales.emplace_back(enemigos[++indice_actual].get());
+		        enemigosActuales.emplace_back(enemigos[++indice_actual].get());
+        	    enemigosActuales.emplace_back(enemigos[++indice_actual].get());
             }
 
 
@@ -1118,34 +1331,30 @@ void renderizadoJuego(WINDOW* gamewin) {
         printPantallaFinal(centerVertical, centerHorizontal);
     }
 
-    while (true) {
-        auto ch = getch();
-
-        if (ch == 'q') {
-            break;
-        }
-    }
+    ch = 0;
+    while ((ch = getch()) != 'q') {};
 
     clear();
     procesoPuntajes(centerVertical, centerHorizontal);
 
-    while (true) {
-        auto ch = getch();
+    ch = 0;
+    while ((ch = getch()) != 'q') {};
 
-        if (ch == 'c') {
-            break;
-        }
-    }
-    reiniciar_valores();   
+    reiniciar_valores(); 
+    clear();
+    wrefresh(gamewin);
+
+    op = printPantallaVolverJugar(centerVertical, centerHorizontal);
     clear();
     wrefresh(gamewin);
 }
 
 int main() {
     WINDOW* gamewin;
+    int op = 1;
 
     while (juego) {
-        renderizadoJuego(gamewin);
+        renderizadoJuego(gamewin, op);
     }
 
     delwin(gamewin);

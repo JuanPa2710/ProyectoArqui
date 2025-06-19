@@ -2,13 +2,9 @@
 #include <ncursesw/ncurses.h>
 #include <string.h>
 #include <vector>
-#include <algorithm>
-#include <string>
 #include <cstdlib>  // para los sonidos
-#include <stdlib.h>
 #include <time.h>
 #include <memory> 
-#include <ctime>
 #include <chrono>
 #include <unistd.h>
 
@@ -81,12 +77,12 @@ int mapa4[10][12] = {
 int mapa5[10][12] = {
   {0,0,1,0,0,0,0,0,0,1,0,0},
   {0,0,1,0,0,0,0,0,0,2,0,0},
-  {1,0,1,0,0,0,0,0,0,1,1,0},
+  {1,0,1,0,1,1,1,1,0,1,1,0},
   {0,0,0,0,0,2,0,0,0,0,0,0},
-  {0,0,0,0,2,2,2,0,0,0,0,0},
+  {1,1,1,0,2,2,2,0,0,1,1,1},
   {0,0,0,0,0,2,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0,0},
-  {0,1,1,0,0,0,0,0,0,1,1,2},
+  {2,1,1,0,1,1,1,1,0,1,1,2},
   {0,0,1,0,0,0,0,0,0,7,0,0},
   {0,0,6,0,0,0,0,0,0,0,0,0},
 };
@@ -330,12 +326,12 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
                     wattroff(win, COLOR_PAIR(1));
                     break;
                 case 2:
-                    wattron(win, COLOR_PAIR(3));
+                    wattron(win, COLOR_PAIR(5));
                     for(int i=0; i<3; i++)
 		            {
                         mvwaddwstr(win, wy+i, wx, L"###");
                     }
-                    wattroff(win, COLOR_PAIR(3));
+                    wattroff(win, COLOR_PAIR(5));
                     break;
                 case 3:
                     wattron(win, COLOR_PAIR(3));
@@ -381,7 +377,7 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
     for (const auto& d : disparos) {
         int wy = d.y * 3 + 1;
         int wx = d.x * 3 + 1;
-        if(nivelActual!=5 || d.fromPlayer){
+        if(d.fromPlayer || !d.fromBoss){
 
             wattron(win, COLOR_PAIR(3));
             mvwaddwstr(win, wy, wx, L" ⬤");
@@ -389,26 +385,17 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
         }
         
         else{
-            for (auto& enemigo : enemigosActuales) {
-                int dir = enemigo->getDireccion() - 1;
-                if(dir==3 || dir == 2)
-                {
-                    wattron(win, COLOR_PAIR(3));
-                    mvwaddwstr(win, wy, wx, L" █");
-                    wattroff(win, COLOR_PAIR(3));
-                }
-                else 
-                {
-                    wattron(win, COLOR_PAIR(3));
-                    mvwaddwstr(win, wy, wx, L" *");
-                    wattroff(win, COLOR_PAIR(3));
 
-                }
+            wattron(win, COLOR_PAIR(3));
+            mvwaddwstr(win, wy, wx, L" *");
+            wattroff(win, COLOR_PAIR(3));
+                
             }
         }
+        
     
     }
-}
+
 
 void printPantallaInicial(int centerHorizontal) {   
     int text1X = centerHorizontal - 65;
@@ -738,7 +725,9 @@ void renderizadoJuego(WINDOW* gamewin) {
     enemigos.emplace_back(std::make_unique<enemigo_normal>(9, 0));
     enemigos.emplace_back(std::make_unique<enemigo_nivel_dos>(0, 0));
     enemigos.emplace_back(std::make_unique<enemigo_nivel_tres>(9, 0));
-
+    
+    enemigos.emplace_back(std::make_unique<enemigo_normal>(9, 0));
+    enemigos.emplace_back(std::make_unique<enemigo_normal>(1, 0));
     enemigos.emplace_back(std::make_unique<enemigo_ultimo>(0, 0));
 
     enemigosActuales.emplace_back(enemigos[indice_actual].get());
@@ -838,7 +827,7 @@ void renderizadoJuego(WINDOW* gamewin) {
                 cantEnemigos = 4;
                 nivelActual++;
                 jugador_x=0;
-                jugador_y=2;
+                jugador_y=0;
                 totem_x = 4;
                 totem_y = 0;
                 for (auto it = disparos.begin(); it != disparos.end();) {
@@ -859,8 +848,8 @@ void renderizadoJuego(WINDOW* gamewin) {
                 nivelActual++;
                 totem_x = 6;
                 totem_y = 9;
-                jugador_x=0;
-                jugador_y=0;
+                jugador_x=11;
+                jugador_y=8;
                 for (auto it = disparos.begin(); it != disparos.end();) {
                     it = disparos.erase(it);
                 }
@@ -875,7 +864,7 @@ void renderizadoJuego(WINDOW* gamewin) {
             
             //Nivel 5
             if (nivelActual == 4 && cantEnemigos == 0) {
-                cantEnemigos = 1;
+                cantEnemigos = 3;
                 nivelActual++;
                 jugador_x=11;
                 jugador_y=8;
@@ -886,6 +875,8 @@ void renderizadoJuego(WINDOW* gamewin) {
                     }
                 } 
                 enemigosActuales.emplace_back(enemigos[++indice_actual].get());
+		enemigosActuales.emplace_back(enemigos[++indice_actual].get());
+        	enemigosActuales.emplace_back(enemigos[++indice_actual].get());
             }
 
 
@@ -949,7 +940,7 @@ void renderizadoJuego(WINDOW* gamewin) {
             if(!congelar)
             {
 		        for (auto& enemigo : enemigosActuales) {
-                enemigo->disparar(gamewin);
+                	enemigo->disparar(gamewin);
                 }
             }
 		    //Para determinar los movimientos del jugador 
@@ -968,7 +959,7 @@ void renderizadoJuego(WINDOW* gamewin) {
                         else if (direccion == KEY_DOWN)  dy =  1;
                         else if (direccion == KEY_LEFT)  dx = -1;
                         else if (direccion == KEY_RIGHT) dx =  1;
-                        disparos.push_back({ jugador_y, jugador_x, dx, dy, true });
+                        disparos.push_back({ jugador_y, jugador_x, dx, dy, true, false });
                         lastShot = now;
                     }
                     break;
@@ -1013,7 +1004,7 @@ void renderizadoJuego(WINDOW* gamewin) {
                 {   
                     for (auto& enemigo : enemigosActuales) {
                         if (std::abs(it->y - enemigo->getPosY()) + std::abs(it->x - enemigo->getPosX()) <= 1 ){
-                            if(nivelActual == 5 && enemigo->get_impactos_destruccion()>0)
+                            if(nivelActual == 5 && enemigo->get_impactos_destruccion()>1)
                             {
                                 system("aplay -q sounds/disparoBlindado.wav &");
                                 enemigo->nuevo_impacto();
@@ -1023,18 +1014,20 @@ void renderizadoJuego(WINDOW* gamewin) {
                             }
                             copia_mapa[it->y][it->x] = 0;
                             system("aplay -q sounds/muerte.wav &");
-                            efecto_destruccion(gamewin, it->y, it->x);
+                            cantEnemigos--;
                             enemigo->morir();
                             puntaje += 10;                            
                             if (indice_actual < enemigos.size()-1) {
 
                             } else {
-                                ejecutando = false;
-                                ganar = true;
-                                break;
+                           	if(cantEnemigos ==0)
+                           	{
+		                        ejecutando = false;
+		                        ganar = true;
+		                        break;
+                           	}
                             }
-                            cantEnemigos--;
-                            if (cantEnemigos >= 2){
+                            if (cantEnemigos >= 2 && nivelActual!=5){
                                 enemigosActuales.emplace_back(enemigos[++indice_actual].get());
                             }
                             eliminar = true;

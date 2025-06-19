@@ -1,7 +1,8 @@
-class Tank {
+
+class Tank
+{
     private:
         std::vector<std::vector<std::wstring>> sprites_normal;
-        std::vector<std::vector<std::wstring>> sprites_nivel_dos;
         int direccion = 0;
         bool vivo = true;
     public:
@@ -12,15 +13,8 @@ class Tank {
                 {L"══ ", L"██═", L"══ "}, // derecha
                 {L" ══", L"═██", L" ══"}   // izquierda
             }
-        {
-        	sprites_nivel_dos =
-        	{
-                {L" ║", L"║█║", L" ━"},   // arriba
-                {L" ━ ", L"║█║", L" ║"},  // abajo
-                {L"══ ", L"██═", L"══ "}, // derecha
-                {L" ══", L"═██", L" ══"}   // izquierda
-        	};
-        }
+
+        {}
         
         void set_direccion(int dir)
         {
@@ -48,3 +42,5 @@ class Tank {
         }
 
 };
+
+

@@ -121,6 +121,7 @@ bool ganar =  false;
 //Booleando que indica que se sigue en juego
 bool juego = true;
 bool salirJuego = false;
+bool enPrincipal = true;
 
 std::chrono::steady_clock::time_point escudo_inicio;
 std::chrono::steady_clock::time_point congelar_inicio;
@@ -207,6 +208,8 @@ void reiniciar_valores()
     disparo = true;
     ganar =  false;
     juego=true;
+    salirJuego = false;
+    enPrincipal = true;
 
     totem_x = 4;
     totem_y = 9;
@@ -489,6 +492,10 @@ void printPantallaGanar(int centerVertical, int centerHorizontal) {
         refresh();
     }
 
+    int text2X = centerHorizontal - 15;
+    const char* msg7 = "-- Presione Q para continuar --";
+    mvprintw(posY+2, text2X, "%s", msg7);
+
 }
 
 void printPantallaFinal(int centerVertical, int centerHorizontal) {
@@ -557,6 +564,11 @@ void printPantallaFinal(int centerVertical, int centerHorizontal) {
         usleep(150000);
         refresh();
     }
+
+    int text2X = centerHorizontal - 15;
+    const char* msg7 = "-- Presione Q para continuar --";
+    mvprintw(posY+2, text2X, "%s", msg7);
+
     refresh();
 }
 
@@ -613,7 +625,11 @@ void printPantallaPuntajes(int centerVertical, int centerHorizontal) {
 
     text1Y += 5;
     std::string text = "Tu puntaje en esta partida: " + std::to_string(puntaje);
-    mvprintw(text1Y++, text1X+33, "%s", text.c_str());
+    mvprintw(text1Y++, text1X+34, "%s", text.c_str());
+
+    int text2X = centerHorizontal - 15;
+    const char* msg7 = "-- Presione Q para continuar --";
+    mvprintw(text1Y+2, text2X+2, "%s", msg7);
 
     wrefresh(rankingWIN);      //Dibuja el mapa apartir de la matriz
 }
@@ -1255,8 +1271,9 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
     bool ejecutando;    
     int cantEnemigos;
 
-    if (op == 1) {
+    if (op == 1) {        
         printPantallaInicial(centerHorizontal);
+        enPrincipal = false;
     }
 
     cargarRecursos(gamewin, op, win_height, win_width, start_y, start_x, centerVertical, 
@@ -1302,9 +1319,8 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
 
         //Opción para salir del juego
         ch = getch();
-        if (ch == 'q') 
+        if (ch == 27 && enPrincipal == false) 
         {
-            juego = false;
             salirJuego = true;
             break;
         }       
@@ -1346,7 +1362,7 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
         ch = 0;
         while ((ch = getch()) != 'q') {};
 
-        reiniciar_valores(); 
+        
         clear();
         wrefresh(gamewin);
 
@@ -1354,6 +1370,7 @@ void renderizadoJuego(WINDOW* gamewin, int &op) {
         clear();
         wrefresh(gamewin);
     }
+    reiniciar_valores(); 
 }
 
 int main() {

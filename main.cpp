@@ -915,8 +915,9 @@ void cargarRecursos(WINDOW* &gamewin, int &op, int &win_height, int &win_width, 
     init_pair(5, COLOR_RED, -1);
     init_pair(6, COLOR_MAGENTA, -1); // Enemigo
     init_pair(7, COLOR_GREEN, -1);   //vida
-    init_pair(8, COLOR_CYAN,   -1);  // par 8 = celeste
-
+    if (COLORS >= 256) {
+    init_pair(8, 14 /*Celeste claro*/, -1);
+	}
     int map_height = 10;
     int map_width = 12;
     win_height = map_height * 3+2;
@@ -963,6 +964,8 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
         jugador_y=8;
         totem_x = 6;
         totem_y = 8;
+    	escudo = false;
+    	congelar = false;
         nivelActual++;
         for (auto it = disparos.begin(); it != disparos.end();) {
             it = disparos.erase(it);
@@ -990,6 +993,8 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
         jugador_y=0;
         totem_x = 4;
         totem_y = 0;
+ 	escudo = false;
+    	congelar = false;
         for (auto it = disparos.begin(); it != disparos.end();) {
             it = disparos.erase(it);
         }
@@ -1016,6 +1021,8 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
         totem_y = 9;
         jugador_x=8;
         jugador_y=9;
+	escudo = false;
+    	congelar = false;
         for (auto it = disparos.begin(); it != disparos.end();) {
             it = disparos.erase(it);
         }
@@ -1040,6 +1047,8 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
         nivelActual++;
         jugador_x=11;
         jugador_y=8;
+	escudo = false;
+    	congelar = false;
         disparos.clear();
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 12; j++) {

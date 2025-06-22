@@ -19,10 +19,12 @@
 using Clock = std::chrono::system_clock;
 using namespace std::chrono;
 
-// Matriz donde se representan los elementos del mapa 
-//(los especifico en un switch más adelante moppss)
-
-//6 = Vida - 7 = Escudo - 8 = Congelar
+//------------------------------------------------------------------------------
+// Definición de los mapas de cada nivel (5 mapas)
+// Cada valor identifica un tipo de objeto en la celda:
+// 0 = camino, 1 = muro normal, 2 = muro indestructible, 3 = tótem,
+// 6 = vida extra, 7 = potenciador de escudo, 8 = potenciador de congelar.
+//------------------------------------------------------------------------------
 int mapa[10][12] = {
   {0,1,0,1,0,1,0,1,0,1,0,0},
   {0,1,0,0,0,0,0,1,0,1,0,0},
@@ -88,67 +90,47 @@ int mapa5[10][12] = {
   {0,0,6,0,0,0,0,0,0,0,0,0},
 };
 
-//Posición inicial del bichito
-int jugador_y = 9, jugador_x = 8;
+//------------------------------------------------------------------------------
+// Variables globales de estado del juego
+//------------------------------------------------------------------------------
+//Posición inicial del jugador
+int jugador_y = 9, jugador_x = 8;         // Posición inicial del jugador
+int direccion = KEY_UP;                    // Última dirección de movimiento
+int vidas = 4;                             // Vidas restantes
+int puntaje = 0, puntaje_nivel = 0;        // Puntuaciones acumuladas
+int nivelActual = 1;                       // Nivel actual
 
-// Última dirreción a la que se movió
-int direccion = KEY_UP;
+std::vector<int> puntajes;                // Lista de mejores puntajes
+std::vector<std::string> nombres;          // Nombres asociados a puntajes
 
-//vidas
-int vidas = 4;
+bool escudo = false;                       // Indicador de escudo activo
+bool congelar = false;                     // Indicador de efecto congelar activo
+bool disparo = true;                       // Permite disparar
+bool ganar = false;                        // Indicador de victoria
+bool juego = true, salirJuego = false;     // Control del bucle principal y salida
+bool enPrincipal = true;                   // Indica si está en pantalla de inicio
 
-// puntaje
-int puntaje = 0;
-int puntaje_nivel = 0;
+Clock::time_point escudo_inicio;           // Marca inicio de escudo
+Clock::time_point congelar_inicio;         // Marca inicio de congelar
+constexpr double COOLDOWN = 0.5;           // Tiempo mínimo entre disparos (s)
+Clock::time_point lastShot = Clock::now() - duration<double>(COOLDOWN);
 
-//Nivel actual
-int nivelActual = 1;   
+int copia_mapa[10][12];                    // Copia del mapa para modificación en tiempo de ejecución
+int totem_x = 4, totem_y = 9;              // Posición inicial del tótem
 
-// Mejores puntajesAdd commentMore actions
-std::vector<int> puntajes;
-std::vector<std::string> nombres;
+std::vector<std::unique_ptr<Enemigo>> enemigos; // Vector que contiene todos los enemigos
+std::vector<Enemigo*> enemigosActuales;        // Enemigos activos en pantalla
+size_t indice_actual = 0;                      // Índice del siguiente enemigo a activar
+std::vector<Disparo> disparos;                 // Lista de disparos en vuelo
+Tank tank;                                     // Instancia del tanque del jugador
 
-//Bandera escudo y tiempos
-bool escudo = false;
 
-//Bandera congelado
-bool congelar = false;
-
-//Banderas de disparo y ganar
-bool disparo = true;
-bool ganar =  false;
-
-//Booleando que indica que se sigue en juego
-bool juego = true;
-bool salirJuego = false;
-bool enPrincipal = true;
-
-std::chrono::steady_clock::time_point escudo_inicio;
-std::chrono::steady_clock::time_point congelar_inicio;
-constexpr double COOLDOWN = 0.5; 
-std::chrono::steady_clock::time_point lastShot =
-    std::chrono::steady_clock::now()
-  - std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-        std::chrono::duration<double>(COOLDOWN)
-    );
-
-double tiempo_disparo;
-double tiempo_transcurrido;
-
-int copia_mapa[10][12];
-
-//Posiciones iniciales del totem
-int totem_x = 4;
-int totem_y = 9;
-
-std::vector<std::unique_ptr<Enemigo>> enemigos;
-std::vector<Enemigo*> enemigosActuales;
-
-size_t indice_actual = 0;                // cuál enemigo estamos usando
-        
-std::vector<Disparo> disparos;
-
-// Aquí recibe las coordenadas de donde se quiere destruir la estructura
+//------------------------------------------------------------------------------
+// destruccion_estructura(y, x):
+//     Maneja la destrucción de muros y la recogida de potenciadores al impactar.
+// Parámetros:
+//     y, x - coordenadas de la celda impactada
+//------------------------------------------------------------------------------
 void destruccion_estructura(int y, int x) {
     if (y >= 0 && y < 10 && x >= 0 && x < 12 && copia_mapa[y][x] == 1 ) {
         copia_mapa[y][x] = 0;
@@ -179,6 +161,10 @@ void destruccion_estructura(int y, int x) {
     }
     }
 
+//------------------------------------------------------------------------------
+// reiniciar_valores():
+//     Restablece todas las variables globales a sus valores iniciales.
+//------------------------------------------------------------------------------
 void reiniciar_valores()
 {
     jugador_y = 9, jugador_x = 8;
@@ -220,6 +206,13 @@ void reiniciar_valores()
     disparos.clear();
 }
 
+//------------------------------------------------------------------------------
+// efecto_destruccion(win, y, x):
+//     Muestra un pequeño efecto visual al destruir un muro.
+// Parámetros:
+//     win - ventana ncurses
+//     y, x - coordenadas de celda
+//------------------------------------------------------------------------------
 void efecto_destruccion(WINDOW* win, int y, int x) {
     wattron(win, COLOR_PAIR(5));
     mvwaddwstr(win, y*3+1, x*3+1, L"**");
@@ -228,9 +221,14 @@ void efecto_destruccion(WINDOW* win, int y, int x) {
     napms(200);
 }
 
-Tank tank;
 
-// Aquí es donde metí la matriz para dibujar el mapa
+//------------------------------------------------------------------------------
+// dibujar_mapa(win, copia_mapa):
+//     Dibuja el mapa, jugador, enemigos, muros y disparos en pantalla.
+// Parámetros:
+//     win - ventana de juego
+//     copia_mapa - estado actual de la matriz del mapa
+//------------------------------------------------------------------------------
 void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
     for (int y = 0; y < 10; ++y) {
         for (int x = 0; x < 12; ++x) {
@@ -348,6 +346,10 @@ void dibujar_mapa(WINDOW* win, int copia_mapa[10][12]) {
     
     }
 
+//------------------------------------------------------------------------------
+// printPantallaInicial(centerHorizontal):
+//     Muestra arte ASCII de pantalla de inicio.
+//------------------------------------------------------------------------------
 void printPantallaInicial(int centerHorizontal) {   
     int text1X = centerHorizontal - 65;
 
@@ -407,6 +409,10 @@ void printPantallaInicial(int centerHorizontal) {
     mvprintw(31, tempX, "%s", line15);
 }
 
+//------------------------------------------------------------------------------
+// printPantallaNivelCompletado(cv, ch, nivel, puntaje):
+//     Ventana emergente que indica nivel completado y puntajes.
+//------------------------------------------------------------------------------
 void printPantallaNivelCompletado(int centerVertical, int centerHorizontal, int nivel, int puntaje) {
     // Crear ventana centrada
     int alto_menu = 8;
@@ -434,6 +440,10 @@ void printPantallaNivelCompletado(int centerVertical, int centerHorizontal, int 
     refresh();
 }
 
+//------------------------------------------------------------------------------
+// printPantallaGanar(cv, ch):
+//     Muestra animación de victoria en pantalla.
+//------------------------------------------------------------------------------
 void printPantallaGanar(int centerVertical, int centerHorizontal) {
     int text1X = centerHorizontal - 16;
     int text1Y = centerVertical - 12;
@@ -498,6 +508,10 @@ void printPantallaGanar(int centerVertical, int centerHorizontal) {
 
 }
 
+//------------------------------------------------------------------------------
+// printPantallaFinal(cv, ch):
+//     Muestra pantalla de "Game Over" con arte ASCII.
+//------------------------------------------------------------------------------
 void printPantallaFinal(int centerVertical, int centerHorizontal) {
     keypad(stdscr, FALSE);
     int text1X = centerHorizontal - 30;
@@ -572,6 +586,10 @@ void printPantallaFinal(int centerVertical, int centerHorizontal) {
     refresh();
 }
 
+//------------------------------------------------------------------------------
+// printPantallaPuntajes(cv, ch):
+//     Dibuja la tabla de mejores puntajes.
+//------------------------------------------------------------------------------
 void printPantallaPuntajes(int centerVertical, int centerHorizontal) {
     int text1X = centerHorizontal - 46;
     int text1Y = centerVertical - 20;
@@ -634,6 +652,11 @@ void printPantallaPuntajes(int centerVertical, int centerHorizontal) {
     wrefresh(rankingWIN);      //Dibuja el mapa apartir de la matriz
 }
 
+//------------------------------------------------------------------------------
+// printPantallaVolverJugar(cv, ch):
+//     Pregunta al jugador si desea volver a jugar.
+// Retorna: 0=Sí, 1=No, -1=Cancel.
+//------------------------------------------------------------------------------
 int printPantallaVolverJugar(int centerVertical, int centerHorizontal) {
     // Crear ventana centrada
     int alto_menu = 12;
@@ -707,6 +730,11 @@ int printPantallaVolverJugar(int centerVertical, int centerHorizontal) {
     }
 }
 
+
+//------------------------------------------------------------------------------
+// obtenerCaracteres(text,y,x):
+//     Captura hasta 3 letras ASCII para nombre de jugador.
+//------------------------------------------------------------------------------
 void obtenerCaracteres(char *text, int y, int x) {
     noecho();
     curs_set(1);
@@ -761,6 +789,10 @@ void obtenerCaracteres(char *text, int y, int x) {
     curs_set(0);
 }
 
+//------------------------------------------------------------------------------
+// mostrarCuadroIngresarNombre(nombre):
+//     Crea ventana para solicitar nombre al jugador.
+//------------------------------------------------------------------------------
 void mostrarCuadroIngresarNombre(char *nombre) {
     int alto_ventana, ancho_ventana;
     getmaxyx(stdscr, alto_ventana, ancho_ventana);
@@ -815,6 +847,10 @@ void mostrarCuadroIngresarNombre(char *nombre) {
     refresh();
 }
 
+//------------------------------------------------------------------------------
+// procesoPuntajes(cv, ch):
+//     Registra el puntaje actual, ordena y mantiene top 5.
+//------------------------------------------------------------------------------
 void procesoPuntajes(int centerVertical, int centerHorizontal) {
     const int MAX_PUNTAJES = 5;
     char name[3];
@@ -868,7 +904,10 @@ void procesoPuntajes(int centerVertical, int centerHorizontal) {
     clear();
     printPantallaPuntajes(centerVertical, centerHorizontal);
 }
-
+//------------------------------------------------------------------------------
+// cargarRecursos:
+//     Inicializa ncurses, colores, enemigos y mapa.
+//------------------------------------------------------------------------------
 void cargarRecursos(WINDOW* &gamewin, int &op, int &win_height, int &win_width, int &start_y, int &start_x, 
                    int centerVertical, int centerHorizontal, bool &ejecutando, int &cantEnemigos, WINDOW* &info_win) {
     enemigosActuales.clear();
@@ -949,6 +988,10 @@ void cargarRecursos(WINDOW* &gamewin, int &op, int &win_height, int &win_width, 
     } 
 }
 
+//------------------------------------------------------------------------------
+// cargarSiguienteNivel(...):
+//     Cambia al siguiente nivel cuando no quedan enemigos.
+//------------------------------------------------------------------------------
 void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int &totem_x, int &totem_y) {
     // Carga nivel 2
     int x, y;
@@ -1061,6 +1104,10 @@ void cargarSiguienteNivel(int &cantEnemigos, int &jugador_x, int &jugador_y, int
     } 
 }
 
+//------------------------------------------------------------------------------
+// manejoEnemigos(gamewin):
+//     Mueve y dispara a enemigos, respeta estados de congelar y escudo.
+//------------------------------------------------------------------------------
 void manejoEnemigos(WINDOW *gamewin) {
         if(!congelar)
         {
@@ -1090,6 +1137,10 @@ void manejoEnemigos(WINDOW *gamewin) {
     
 }
 
+//------------------------------------------------------------------------------
+// entradaTecleado(new_y,new_x,ch):
+//     Procesa entrada del jugador para mover y disparar.
+//------------------------------------------------------------------------------
 void entradaTecleado(int &new_y, int &new_x, int &ch) {
     switch (ch) {
         case KEY_UP:    new_y--; direccion = KEY_UP; tank.set_direccion(0); break;
@@ -1128,6 +1179,10 @@ void entradaTecleado(int &new_y, int &new_x, int &ch) {
     }
 }
 
+//------------------------------------------------------------------------------
+// logicaJuego(cantEnemigos, ejecutando):
+//     Procesa colisiones de disparos con mapa, enemigos y jugador.
+//------------------------------------------------------------------------------
 void logicaJuego(int &cantEnemigos, bool &ejecutando) {
     for (auto it = disparos.begin(); it != disparos.end();) {
         bool eliminar = false;
@@ -1259,6 +1314,11 @@ void logicaJuego(int &cantEnemigos, bool &ejecutando) {
     }
 }
 
+
+//------------------------------------------------------------------------------
+// renderizadoJuego(gamewin, op):
+//     Bucle principal: inicializa, dibuja, recibe input y actualiza estado.
+//------------------------------------------------------------------------------
 void renderizadoJuego(WINDOW* gamewin, int &op) {   
     srand(time(NULL));
     setlocale(LC_ALL, "");

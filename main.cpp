@@ -93,35 +93,66 @@ int mapa5[10][12] = {
 //------------------------------------------------------------------------------
 // Variables globales de estado del juego
 //------------------------------------------------------------------------------
-//Posición inicial del jugador
-int jugador_y = 9, jugador_x = 8;         // Posición inicial del jugador
-int direccion = KEY_UP;                    // Última dirección de movimiento
-int vidas = 4;                             // Vidas restantes
-int puntaje = 0, puntaje_nivel = 0;        // Puntuaciones acumuladas
-int nivelActual = 1;                       // Nivel actual
+//Posición inicial del bichito
+int jugador_y = 9, jugador_x = 8;
 
-std::vector<int> puntajes;                // Lista de mejores puntajes
-std::vector<std::string> nombres;          // Nombres asociados a puntajes
+// Última dirreción a la que se movió
+int direccion = KEY_UP;
 
-bool escudo = false;                       // Indicador de escudo activo
-bool congelar = false;                     // Indicador de efecto congelar activo
-bool disparo = true;                       // Permite disparar
-bool ganar = false;                        // Indicador de victoria
-bool juego = true, salirJuego = false;     // Control del bucle principal y salida
-bool enPrincipal = true;                   // Indica si está en pantalla de inicio
+//vidas
+int vidas = 4;
 
-Clock::time_point escudo_inicio;           // Marca inicio de escudo
-Clock::time_point congelar_inicio;         // Marca inicio de congelar
-constexpr double COOLDOWN = 0.5;           // Tiempo mínimo entre disparos (s)
-Clock::time_point lastShot = Clock::now() - duration<double>(COOLDOWN);
+// puntaje
+int puntaje = 0;
+int puntaje_nivel = 0;
 
-int copia_mapa[10][12];                    // Copia del mapa para modificación en tiempo de ejecución
-int totem_x = 4, totem_y = 9;              // Posición inicial del tótem
+//Nivel actual
+int nivelActual = 1;   
 
-std::vector<std::unique_ptr<Enemigo>> enemigos; // Vector que contiene todos los enemigos
-std::vector<Enemigo*> enemigosActuales;        // Enemigos activos en pantalla
-size_t indice_actual = 0;                      // Índice del siguiente enemigo a activar
-std::vector<Disparo> disparos;                 // Lista de disparos en vuelo
+// Mejores puntajesAdd commentMore actions
+std::vector<int> puntajes;
+std::vector<std::string> nombres;
+
+//Bandera escudo y tiempos
+bool escudo = false;
+
+//Bandera congelado
+bool congelar = false;
+
+//Banderas de disparo y ganar
+bool disparo = true;
+bool ganar =  false;
+
+//Booleando que indica que se sigue en juego
+bool juego = true;
+bool salirJuego = false;
+bool enPrincipal = true;
+
+std::chrono::steady_clock::time_point escudo_inicio;
+std::chrono::steady_clock::time_point congelar_inicio;
+constexpr double COOLDOWN = 0.5; 
+std::chrono::steady_clock::time_point lastShot =
+    std::chrono::steady_clock::now()
+  - std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+        std::chrono::duration<double>(COOLDOWN)
+    );
+
+double tiempo_disparo;
+double tiempo_transcurrido;
+
+int copia_mapa[10][12];
+
+//Totem pos
+int totem_x = 4;
+int totem_y = 9;
+
+std::vector<std::unique_ptr<Enemigo>> enemigos;
+std::vector<Enemigo*> enemigosActuales;
+
+size_t indice_actual = 0;                // cuál enemigo estamos usando
+        
+std::vector<Disparo> disparos;
+
 Tank tank;                                     // Instancia del tanque del jugador
 
 

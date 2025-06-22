@@ -6,7 +6,7 @@
 class enemigo_ultimo : public Enemigo 
 {
 private:
-	int impactos_destruccion = 3;
+	int impactos_destruccion = 3; //Atibuto que indica cuantos disparos soporta el jefe antes de ser destruido
 public:
 	enemigo_ultimo(int x, int y): Enemigo (x,y)
 	{
@@ -103,13 +103,15 @@ public:
 
             
         }
-        
+
+	/*Retorna los impactos que le quedan al jefe para ser destruido*/
         int get_impactos_destruccion() const override
         {
         	return impactos_destruccion;
         
         }
-        
+
+	/*Reduce la cantidad de impactos necesaria para destruir al jefe*/
         void nuevo_impacto() override
         {
         	impactos_destruccion--;

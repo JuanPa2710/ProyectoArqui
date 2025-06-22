@@ -25,18 +25,18 @@ class Enemigo
 {
 protected: 
 	int contador_enemigo = 0;
-	int velocidad_enemigo = 5;
+	int velocidad_enemigo = 5; /*Velocidad del enemigo. Entre más cercana a cero más rápido se vuelve el rival*/
 
-	int velocidad_disparo = 6;
+	int velocidad_disparo = 6; /*Velocidad de disparo del enemigo. Entre más cercana a cero más rápido dispara el rival */
 	int contador_disparo = 0;
 
-	int posicion_x;
-	int posicion_y;
+	int posicion_x; //Posicion en x del enemigo
+	int posicion_y; //Posicion en y del enemigo
 	int direccion; // 1=este, 2=oeste, 3=norte, 4=sur
 
-	bool vivo = true;
+	bool vivo = true; 
 	
-	std::vector<std::vector<std::wstring>> sprite;
+	std::vector<std::vector<std::wstring>> sprite; //Vector que contiene los sprites de cada enemigo
 	
     // Función para que el enemigo pueda desviarse si hay una ruta disponible
     void verificarYDesviar() {
@@ -158,7 +158,8 @@ public:
 		    direccion = (rand() % 4) + 1;
 		}
 	}
-	
+
+	/*La velocidad y la forma de disparo son definidos por cada entidad*/
 	virtual void disparar(WINDOW* ventana)= 0;
     
     void morir(){

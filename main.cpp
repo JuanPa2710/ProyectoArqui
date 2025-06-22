@@ -137,7 +137,7 @@ double tiempo_transcurrido;
 
 int copia_mapa[10][12];
 
-//Totem pos
+//Posiciones iniciales del totem
 int totem_x = 4;
 int totem_y = 9;
 
@@ -1083,7 +1083,7 @@ void manejoEnemigos(WINDOW *gamewin) {
         {  
             auto ahora = std::chrono::steady_clock::now();
             auto duracion = std::chrono::duration_cast<std::chrono::seconds>(ahora - escudo_inicio);
-            if (duracion.count() >= 5) {
+            if (duracion.count() >= 2) {
                 escudo = false;
             }
         }

@@ -99,7 +99,7 @@ public:
                 for(int i = posicion_x; 12>i; i++){
                     
                 }
-                disparos.push_back({posicion_y, posicion_x, disparo_x, disparo_y, false});
+                disparos.push_back({posicion_y, posicion_x, disparo_x, disparo_y, false, true});
 
             
         }
